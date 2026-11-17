@@ -238,7 +238,7 @@ await new Promise((resolve) => setTimeout(resolve, 2500));
 test("the home screen renders rather than staying on the loader", () => {
   const text = app.textContent;
   assert.ok(!text.includes("Opening the encyclopaedia"), "stuck on the loading state");
-  assert.ok(app.find("logo").length === 1, "no title block on the home screen");
+  assert.ok(app.find("cover").length === 1, "no front page on the home screen");
   assert.ok(/3,9\d\d articles/.test(text), `entry count missing from: ${text.slice(0, 120)}`);
 });
 
@@ -508,24 +508,18 @@ test("a stored preference is restored, and a broken one does not break the page"
 
 /* ---------- cover, appearance, history ---------- */
 
-test("the app opens on a drawn title block, not an image", () => {
+test("the app opens on the book's own front page", () => {
   // Earlier tests navigated away; return to the opening screen.
   while (!backButton.hidden) backButton.click();
-  const logo = app.find("logo")[0];
-  assert.ok(logo, "no title block on the home screen");
+  const cover = app.find("cover")[0];
+  assert.ok(cover, "no front page on the home screen");
 
-  const text = logo.textContent;
-  assert.match(text, /Freemasonry/, "the display line is missing");
-  assert.match(text, /Mackey/, "the author is missing");
-  assert.match(text, /3,9\d\d articles/, "the entry count is missing");
-
-  // Set in type, so it scales and follows the theme; nothing to download.
-  assert.equal(logo.all().filter((n) => n.tagName === "img").length, 0,
-    "the title block should be drawn, not an image");
-  const mark = logo.all().find((n) => n.className.includes("logo-mark"));
-  assert.ok(mark, "no mark");
-  assert.equal(mark!.getAttribute("aria-hidden"), "true",
-    "the mark repeats the words beside it and should not be read out twice");
+  const image = cover.all().find((n) => n.tagName === "img");
+  assert.ok(image, "the front page has no image");
+  assert.match(image!.getAttribute("src") ?? "", /title-page\.png$/);
+  assert.match(image!.getAttribute("alt") ?? "", /Mackey/,
+    "the scan has no useful alternative text");
+  assert.match(cover.textContent, /3,9\d\d articles/);
 });
 
 test("appearance offers auto, light and dark", () => {
@@ -607,4 +601,82 @@ test("relative times read naturally", async () => {
   assert.equal(module.when(now - 60_000, now), "1 minute ago");
   assert.equal(module.when(now - 3_600_000, now), "1 hour ago");
   assert.equal(module.when(now - 86_400_000 * 3, now), "3 days ago");
+});
+
+/* ---------- page by page ---------- */
+
+function pageBar(): StubNode | undefined {
+  return app.find("pagebar")[0];
+}
+
+function pageButton(label: RegExp): StubNode | undefined {
+  return app.find("pagestep").find((b) => label.test(b.textContent));
+}
+
+test("the front page offers reading the book page by page", () => {
+  while (!backButton.hidden) backButton.click();
+  const browse = app.find("browse")[0];
+  assert.ok(browse, "no way into the page-by-page view");
+  browse.click();
+  assert.ok(pageBar(), "the page view did not open");
+  assert.match(pageBar()!.textContent, /Page \d+ of \d+/);
+});
+
+test("printed page numbers are plausible for a 950-page book", () => {
+  const label = pageBar()!.textContent;
+  const numbers = (label.match(/\d+/g) ?? []).map(Number);
+  for (const n of numbers) {
+    assert.ok(n >= 1 && n <= 1000,
+      `page number out of range for this book: ${n} (folio OCR errors once gave 8387)`);
+  }
+});
+
+test("a page lists the articles that begin on it", () => {
+  const rows = app.find("result");
+  assert.ok(rows.length > 0, "no articles listed for this page");
+  for (const row of rows.slice(0, 3)) {
+    assert.match(row.textContent, /p\. \d+/, "an article shows no page reference");
+  }
+});
+
+test("next and previous move through the book in order", () => {
+  const readPage = () => Number((pageBar()!.textContent.match(/Page (\d+)/) ?? [])[1]);
+  const first = readPage();
+
+  pageButton(/Next/)!.click();
+  const second = readPage();
+  assert.ok(second > first, `next went backwards: ${first} then ${second}`);
+
+  pageButton(/Previous/)!.click();
+  assert.equal(readPage(), first, "previous did not return to where we were");
+});
+
+test("previous is disabled on the first page of the book", () => {
+  const readPage = () => Number((pageBar()!.textContent.match(/Page (\d+)/) ?? [])[1]);
+  // Walk back to the start.
+  let guard = 0;
+  while (!pageButton(/Previous/)!.disabled && guard++ < 2000) {
+    pageButton(/Previous/)!.click();
+  }
+  assert.ok(pageButton(/Previous/)!.disabled, "previous never became unavailable");
+  assert.ok(readPage() >= 1, "walked off the front of the book");
+  assert.ok(!pageButton(/Next/)!.disabled, "next unavailable at the start");
+});
+
+test("jumping to a page lands on or near it", () => {
+  const field = app.all().find((n) => n.tagName === "input" &&
+    n.getAttribute("aria-label") === "Go to printed page");
+  assert.ok(field, "no page jump field");
+  field!.value = "500";
+  app.find("pagestep").find((b) => b.textContent === "Go")!.click();
+
+  const landed = Number((pageBar()!.textContent.match(/Page (\d+)/) ?? [])[1]);
+  assert.ok(Math.abs(landed - 500) <= 5, `asked for 500, landed on ${landed}`);
+});
+
+test("opening an article from a page view works", () => {
+  const row = app.find("result")[0];
+  assert.ok(row, "nothing to open");
+  row.click();
+  assert.equal(app.find("entry").length, 1, "the article did not open");
 });

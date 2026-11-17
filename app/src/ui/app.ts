@@ -21,7 +21,8 @@ import { Band, BAND_LABEL } from "../core/search/engine.ts";
 type Screen =
   | { name: "home" }
   | { name: "results"; query: string }
-  | { name: "entry"; id: number; query: string };
+  | { name: "entry"; id: number; query: string }
+  | { name: "pages"; page: number };
 
 let dictionary: Dictionary | null = null;
 let meta: Meta | null = null;
@@ -82,13 +83,14 @@ function render(): void {
   }
   if (screen.name === "home") root.append(renderHome());
   else if (screen.name === "results") root.append(renderResults(screen.query));
+  else if (screen.name === "pages") root.append(renderPages(screen.page));
   else root.append(renderEntry(screen.id, screen.query));
 }
 
 function renderHome(): HTMLElement {
   const wrap = element("div", { class: "wrap" });
 
-  wrap.append(renderLogo());
+  wrap.append(renderFrontPage());
 
   const recent = renderRecent();
   if (recent) wrap.append(recent);
@@ -104,18 +106,119 @@ function renderHome(): HTMLElement {
  * app can set itself. Drawn in the app's own type and colour it scales, reads
  * correctly in both themes, and costs nothing.
  */
-function renderLogo(): HTMLElement {
-  const logo = element("section", { class: "logo" });
-  const mark = element("div", { class: "logo-mark", "aria-hidden": "true" });
-  mark.append(element("span", {}, "AM"));
-  logo.append(mark);
-  logo.append(element("p", { class: "logo-line" }, "New and revised edition"));
-  logo.append(element("p", { class: "logo-of" }, "An Encyclop\u00e6dia of"));
-  logo.append(element("h1", { class: "logo-title" }, "Freemasonry"));
-  logo.append(element("p", { class: "logo-by" }, "Albert G. Mackey"));
-  logo.append(element("p", { class: "logo-line" },
+function renderFrontPage(): HTMLElement {
+  const cover = element("section", { class: "cover" });
+  const figure = element("figure");
+  figure.append(element("img", {
+    src: new URL("../img/title-page.png", import.meta.url).href,
+    alt: "Title page: An Encyclop\u00e6dia of Freemasonry and Its Kindred "
+       + "Sciences, by Albert G. Mackey, new and revised edition, 1914",
+    width: "760",
+    height: "1299",
+  }));
+  figure.append(element("figcaption", {},
     `${dictionary!.size.toLocaleString()} articles, searchable offline`));
-  return logo;
+  cover.append(figure);
+
+  const browse = element("button", { class: "browse", type: "button" },
+    "Read the book page by page");
+  browse.addEventListener("click", () => go({ name: "pages", page: firstPage() }));
+  cover.append(browse);
+  return cover;
+}
+
+/* ---------- page by page ---------- */
+
+let pageNumbers: number[] = [];
+
+/** Every printed page that has an entry beginning on it, in order. */
+function pages(): number[] {
+  if (pageNumbers.length === 0) {
+    const found = new Set<number>();
+    for (const row of dictionary!.headwords.rows) {
+      const page = row[4];
+      if (page > 0) found.add(page);
+    }
+    pageNumbers = [...found].sort((a, b) => a - b);
+  }
+  return pageNumbers;
+}
+
+function firstPage(): number {
+  return pages()[0] ?? 1;
+}
+
+function stepPage(from: number, direction: 1 | -1): number | null {
+  const all = pages();
+  const at = all.indexOf(from);
+  if (at === -1) {
+    // Not a page that starts an entry: move to the nearest one that does.
+    const next = direction === 1
+      ? all.find((page) => page > from)
+      : [...all].reverse().find((page) => page < from);
+    return next ?? null;
+  }
+  return all[at + direction] ?? null;
+}
+
+function renderPages(page: number): HTMLElement {
+  const wrap = element("div", { class: "wrap" });
+  const all = pages();
+  const position = all.indexOf(page);
+
+  const bar = element("div", { class: "pagebar" });
+  const previous = element("button", { class: "pagestep", type: "button" },
+    "\u2190 Previous");
+  const next = element("button", { class: "pagestep", type: "button" },
+    "Next \u2192");
+  const back = stepPage(page, -1);
+  const forward = stepPage(page, 1);
+  previous.disabled = back === null;
+  next.disabled = forward === null;
+  previous.addEventListener("click", () => {
+    if (back !== null) go({ name: "pages", page: back }, true);
+  });
+  next.addEventListener("click", () => {
+    if (forward !== null) go({ name: "pages", page: forward }, true);
+  });
+
+  const label = element("span", { class: "pagelabel" },
+    `Page ${page}` + (position >= 0 ? ` of ${all[all.length - 1]}` : ""));
+  bar.append(previous, label, next);
+  wrap.append(bar);
+
+  const entries = dictionary!.byPage(page);
+  if (entries.length === 0) {
+    wrap.append(element("p", { class: "empty" },
+      "No article begins on this page."));
+  }
+  for (const result of entries) {
+    wrap.append(resultRow(result, ""));
+  }
+
+  const jump = element("div", { class: "pagejump" });
+  const field = element("input", {
+    type: "number", min: String(all[0] ?? 1), max: String(all[all.length - 1] ?? 1),
+    value: String(page), "aria-label": "Go to printed page",
+  }) as HTMLInputElement;
+  const goButton = element("button", { class: "pagestep", type: "button" }, "Go");
+  const jumpTo = () => {
+    const wanted = Number(field.value);
+    if (!Number.isFinite(wanted)) return;
+    const nearest = all.includes(wanted)
+      ? wanted
+      : all.reduce((best, candidate) =>
+          Math.abs(candidate - wanted) < Math.abs(best - wanted) ? candidate : best,
+          all[0]);
+    go({ name: "pages", page: nearest }, true);
+  };
+  goButton.addEventListener("click", jumpTo);
+  field.addEventListener("keydown", (event) => {
+    if ((event as KeyboardEvent).key === "Enter") jumpTo();
+  });
+  jump.append(element("span", { class: "sans" }, "Go to page"), field, goButton);
+  wrap.append(jump);
+  return wrap;
 }
 
 function renderRecent(): HTMLElement | null {

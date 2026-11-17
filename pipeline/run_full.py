@@ -129,30 +129,53 @@ def stitch(records: list[dict]) -> list[Entry]:
 
 
 def interpolate_folios(records: list[dict]) -> int:
-    """Fill printed page numbers the running head did not yield.
+    """Repair and fill the printed page numbers.
 
-    The offset between PDF and printed page is locally constant but drifts
-    across the book, so a missing folio is recovered from its neighbours rather
-    than from a single global offset. Returns how many were filled.
+    The folio is read off the running head, so it carries the same OCR errors
+    as everything else: a stray mark adds a digit (page 841 read as 8387), a
+    faint one loses it (440 read as 44), and the unnumbered front matter picks
+    up numbers from nowhere at all (1877 and up).
+
+    The offset between the printed and the PDF page number is locally constant
+    -- it drifts only where an unnumbered plate sits -- so the neighbours say
+    what a folio should be. Anything that disagrees with the local median by
+    more than a couple of pages is replaced, and missing ones are filled the
+    same way. Returns how many were corrected or filled.
     """
-    ordered = sorted(records, key=lambda r: r["pdf_page"])
-    known = [(r["pdf_page"], r["printed_page"]) for r in ordered
-             if isinstance(r.get("printed_page"), int)]
-    if not known:
+    ordered = sorted((r for r in records if r.get("region") == regions.REGION_MAIN),
+                     key=lambda r: r["pdf_page"])
+    if not ordered:
         return 0
-    filled = 0
-    for record in ordered:
-        if isinstance(record.get("printed_page"), int):
+
+    def local_offset(index: int, window: int = 25) -> int | None:
+        offsets = []
+        for other in ordered[max(0, index - window): index + window]:
+            folio = other.get("printed_page")
+            if isinstance(folio, int) and 1 <= folio <= 1200:
+                offsets.append(folio - other["pdf_page"])
+        if len(offsets) < 3:
+            return None
+        offsets.sort()
+        return offsets[len(offsets) // 2]
+
+    changed = 0
+    for index, record in enumerate(ordered):
+        offset = local_offset(index)
+        if offset is None:
             continue
-        if record.get("region") in (regions.REGION_PLATE, None):
+        expected = record["pdf_page"] + offset
+        folio = record.get("printed_page")
+        if isinstance(folio, int) and abs(folio - expected) <= 2 and 1 <= folio <= 1200:
             continue
-        pdf_page = record["pdf_page"]
-        nearest = min(known, key=lambda pair: abs(pair[0] - pdf_page))
-        if abs(nearest[0] - pdf_page) <= 6:
-            record["printed_page"] = nearest[1] + (pdf_page - nearest[0])
-            record["folio_interpolated"] = True
-            filled += 1
-    return filled
+        record["printed_page"] = expected if expected >= 1 else None
+        record["folio_repaired"] = True
+        changed += 1
+
+    # Front matter and plates carry no folio of their own.
+    for record in records:
+        if record.get("region") != regions.REGION_MAIN:
+            record["printed_page"] = None
+    return changed
 
 
 def merge_false_splits(entries: list) -> int:
@@ -249,11 +272,12 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
             encoding="utf-8")
 
     # Push interpolated folios down onto the entries themselves.
+    # The page record now holds the repaired folio, so it replaces whatever the
+    # running head gave the entry rather than only filling a gap.
     folio_by_page = {r["pdf_page"]: r.get("printed_page") for r in records}
     for record in records:
         for raw in record.get("entries", []):
-            if raw.get("printed_page") is None:
-                raw["printed_page"] = folio_by_page.get(record["pdf_page"])
+            raw["printed_page"] = folio_by_page.get(record["pdf_page"])
 
     entries = stitch(records)
 
