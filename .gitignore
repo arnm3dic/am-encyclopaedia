@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node (if a site build is added later)
+node_modules/
+dist/
+.cache/
+
+# Local notes not meant for the repo
+scratch/
+*.local.md
