@@ -41,6 +41,12 @@ FIXTURE_SEEDS = [
     "  spaced   out  ", "", "St. John's Day.", "Zschokke, J. H. D.",
     "Maçonnerie d'Adoption", "Schröder, Friedrich Ludwig",
     "Tetragrammaton", "A.'. L.'.", "Beaucéant", "Ne Plus Ultra",
+    # Italic markers are carried inline in stored text and must vanish
+    # identically in both implementations, or a search over an italicised
+    # phrase matches in one and not the other.
+    "\x02Maçonnerie\x03 d'Adoption",
+    "See \x02Parts\x03, and also \x02Points\x03",
+    "\x02\x03",
 ]
 
 

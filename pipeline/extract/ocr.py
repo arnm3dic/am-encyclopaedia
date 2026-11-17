@@ -57,6 +57,8 @@ class Word:
     conf: float
     stroke_width: float
     bold: bool = False
+    italic: bool = False
+    slant: float | None = None
     column: int = 0
     line: int = 0
 
@@ -91,7 +93,7 @@ def page_to_dict(page: "Page") -> dict:
         "mean_conf": round(page.mean_conf, 2),
         "words": [
             [w.text, w.left, w.top, w.width, w.height,
-             round(w.conf, 1), round(w.stroke_width, 3)]
+             round(w.conf, 1), round(w.stroke_width, 3), int(w.italic)]
             for w in page.words
         ],
     }
@@ -103,8 +105,10 @@ def page_from_dict(data: dict) -> "Page":
     Thresholds are recomputed rather than stored, so tuning them takes effect
     on the next parse without touching the cache.
     """
-    words = [Word(text=t, left=l, top=tp, width=w, height=h, conf=c, stroke_width=s)
-             for t, l, tp, w, h, c, s in data["words"]]
+    words = [Word(text=row[0], left=row[1], top=row[2], width=row[3], height=row[4],
+                  conf=row[5], stroke_width=row[6],
+                  italic=bool(row[7]) if len(row) > 7 else False)
+             for row in data["words"]]
     page = Page(pdf_page=data["pdf_page"], image_path=Path(""),
                 width=data["width"], height=data["height"], words=words,
                 gutter_x=data["gutter_x"], mean_conf=data["mean_conf"])

@@ -1,7 +1,9 @@
 {
   "_comment": "Corrections to body text, scoped to one entry so a word is only changed where it is wrong. Each was verified against the page image. Keyed by headword; each pair is [as extracted, as printed].",
-
   "Arts.": [
-    ["(See Paris, and also Points.)", "(See Parts, and also Points.)"]
+    [
+      "(See Paris, and also Points.)",
+      "(See \u0002Parts,\u0003 and also \u0002Points.)\u0003"
+    ]
   ]
 }

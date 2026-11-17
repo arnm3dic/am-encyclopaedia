@@ -108,6 +108,24 @@
     "first_letter": "N"
   },
   {
+    "input": "\u0002Maçonnerie\u0003 d'Adoption",
+    "normalise": "maconnerie d'adoption",
+    "sort_key": "maconnerie d adoption",
+    "first_letter": "M"
+  },
+  {
+    "input": "See \u0002Parts\u0003, and also \u0002Points\u0003",
+    "normalise": "see parts and also points",
+    "sort_key": "see parts and also points",
+    "first_letter": "S"
+  },
+  {
+    "input": "\u0002\u0003",
+    "normalise": "",
+    "sort_key": "",
+    "first_letter": "#"
+  },
+  {
     "input": "A. Anderson Manuscript.",
     "normalise": "a anderson manuscript",
     "sort_key": "a anderson manuscript",

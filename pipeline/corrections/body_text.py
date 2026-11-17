@@ -329,8 +329,12 @@ def apply_entry_overrides(entries: list[dict], overrides: dict) -> int:
         if not pairs:
             continue
         for before, after in pairs:
-            if before in entry.get("body", ""):
-                entry["body"] = entry["body"].replace(before, after)
+            # Italic markers sit between characters, so the pattern has to
+            # tolerate them anywhere.
+            pattern = re.compile("[\x02\x03]*".join(re.escape(c) for c in before))
+            body = entry.get("body", "")
+            if pattern.search(body):
+                entry["body"] = pattern.sub(after.replace("\\", "\\\\"), body, count=1)
                 changed += 1
     return changed
 

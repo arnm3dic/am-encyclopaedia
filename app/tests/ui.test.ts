@@ -304,3 +304,35 @@ test("Escape dismisses the suggestions", () => {
   box.dispatch("keydown", { key: "Escape" });
   assert.equal(suggestionButtons().length, 0, "suggestions survived Escape");
 });
+
+test("italics from the book are rendered as emphasis", () => {
+  const box = searchInput();
+  box.value = "";
+  box.type("arts");
+  const option = suggestionButtons().find((o) => o.textContent.startsWith("Arts."));
+  assert.ok(option, "Arts. not offered");
+  option!.click();
+
+  const body = app.find("entry-body")[0];
+  assert.ok(body, "no entry body");
+  const emphasised = body.all().filter((n) => n.tagName === "em").map((n) => n.textContent);
+  assert.ok(emphasised.length > 0, "nothing italic in an entry that is italic in the book");
+  assert.ok(emphasised.some((t) => t.includes("Parts")),
+    `expected the cross-reference italic, got: ${emphasised.join(" | ")}`);
+});
+
+test("italic markers never reach the reader as characters", () => {
+  const body = app.find("entry-body")[0];
+  assert.ok(!body.textContent.includes("\u0002"), "an opening marker leaked into the text");
+  assert.ok(!body.textContent.includes("\u0003"), "a closing marker leaked into the text");
+});
+
+test("markers do not leak into result snippets either", () => {
+  const box = searchInput();
+  box.value = "";
+  box.type("masonry");
+  box.dispatch("keydown", { key: "Enter" });
+  const text = app.textContent;
+  assert.ok(!text.includes("\u0002") && !text.includes("\u0003"),
+    "markers visible on the results screen");
+});

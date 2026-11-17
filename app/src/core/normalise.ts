@@ -54,7 +54,10 @@ export function stripDiacritics(text: string): string {
  */
 export function normalise(text: string): string {
   if (!text) return "";
-  let out = stripDiacritics(text).toLowerCase();
+  // Italic markers are carried inline in stored text. They are styling, not
+  // content, and must never reach a match key. Mirrors normalise.py.
+  const stripped = text.replace(/[\u0002\u0003]/g, "");
+  let out = stripDiacritics(stripped).toLowerCase();
   out = out.replace(INNER_HYPHEN, HYPHEN_MARK);
   out = out.replace(INNER_APOSTROPHE, APOSTROPHE_MARK);
   out = out.replace(NON_WORD, " ");
@@ -76,4 +79,9 @@ export function firstLetter(text: string): string {
   const key = sortKey(text);
   const first = key.charAt(0);
   return first && LETTER.test(first) ? first.toUpperCase() : "#";
+}
+
+/** Remove the inline italic markers, for snippets and plain-text uses. */
+export function stripMarkers(text: string): string {
+  return text.replace(/[\u0002\u0003]/g, "");
 }

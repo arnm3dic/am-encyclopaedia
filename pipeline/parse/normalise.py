@@ -59,6 +59,9 @@ def normalise(text: str) -> str:
     """
     if not text:
         return ""
+    # Italic markers are carried inline in stored text; they are styling, not
+    # content, and must never reach a match key.
+    text = text.replace("\x02", "").replace("\x03", "")
     text = strip_diacritics(text)
     text = text.lower()
     text = _INNER_HYPHEN.sub(_HYPHEN_MARK, text)

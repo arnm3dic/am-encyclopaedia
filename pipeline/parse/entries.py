@@ -73,6 +73,13 @@ def reading_order(page: Page, head: RunningHead) -> list[Word]:
     return sorted(body, key=lambda w: (w.column, w.line, w.left))
 
 
+# Italic runs are marked inline with control characters, then separated from
+# the text at build time into plain text plus spans. Keeping markup out of the
+# stored text means search never has to know about it.
+ITALIC_OPEN = "\x02"
+ITALIC_CLOSE = "\x03"
+
+
 def _join_lines(words: list[Word]) -> str:
     """Assemble text, rejoining words broken across line ends.
 
@@ -84,24 +91,34 @@ def _join_lines(words: list[Word]) -> str:
         return ""
     pieces: list[str] = []
     pending_hyphen = False
+    in_italic = False
     current_line = words[0].line
     for word in words:
         text = word.text
         if pending_hyphen:
-            if text[:1].isupper():
-                pieces.append("-" + text)
-            else:
-                pieces.append(text)
+            # The two halves of a broken word share the first half's styling.
+            pieces.append("-" + text if text[:1].isupper() else text)
             pending_hyphen = False
             current_line = word.line
             continue
         if word.line != current_line:
             current_line = word.line
+
+        separator = "" if not pieces else " "
+        prefix = separator
+        if word.italic != in_italic:
+            # Opening goes after the space, closing before it, so the marker
+            # always hugs the words it covers.
+            prefix = (separator + ITALIC_OPEN) if word.italic else (ITALIC_CLOSE + separator)
+            in_italic = word.italic
+
         if text.endswith("-") and len(text) > 1:
-            pieces.append(" " + text[:-1] if pieces else text[:-1])
+            pieces.append(prefix + text[:-1])
             pending_hyphen = True
             continue
-        pieces.append(" " + text if pieces else text)
+        pieces.append(prefix + text)
+    if in_italic:
+        pieces.append(ITALIC_CLOSE)
     text = "".join(pieces)
     # OCR of this scan leaves spaces before terminal punctuation.
     text = re.sub(r"\s+([,.;:!?])", r"\1", text)
@@ -288,7 +305,10 @@ def parse_page(page: Page, head: RunningHead, region: str) -> list[Entry]:
 
     for position, (start, end, anchored) in enumerate(spans):
         stop = spans[position + 1][0] if position + 1 < len(spans) else len(words)
-        headword = _join_lines(words[start:end + 1])
+        # Headwords are set bold, not italic. A marker here would be noise,
+        # and it breaks the overrides, which key on the printed headword.
+        headword = _join_lines(words[start:end + 1]).replace(
+            ITALIC_OPEN, "").replace(ITALIC_CLOSE, "")
         body = _join_lines(words[end + 1:stop])
         issues: list[str] = []
         if not body:

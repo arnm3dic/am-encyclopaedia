@@ -11,6 +11,7 @@
  */
 
 import { loadDictionary } from "../core/data/load.ts";
+import { stripMarkers } from "../core/normalise.ts";
 import type { Dictionary, Result, Meta } from "../core/search/engine.ts";
 import { Band, BAND_LABEL } from "../core/search/engine.ts";
 
@@ -341,7 +342,8 @@ function resultRow(result: Result, query: string): HTMLElement {
   }
   button.append(head);
   if (entry) {
-    button.append(element("p", { class: "result-body" }, entry.body.slice(0, 180)));
+    button.append(element("p", { class: "result-body" },
+      stripMarkers(entry.body).slice(0, 180)));
   }
   button.addEventListener("click", () => go({ name: "entry", id: result.id, query }));
   return button;
@@ -371,7 +373,7 @@ function renderEntry(id: number, query: string): HTMLElement {
   const body = element("div", { class: "entry-body" });
   const terms = query && !query.startsWith("letter:") ? query : "";
   for (const paragraph of splitParagraphs(entry.body)) {
-    body.append(highlight(paragraph, terms));
+    body.append(renderParagraph(paragraph, terms));
   }
   article.append(body);
 
@@ -437,7 +439,63 @@ function splitParagraphs(body: string): string[] {
   return paragraphs;
 }
 
-function highlight(text: string, query: string): HTMLElement {
+/**
+ * Render one paragraph, turning italic markers into emphasis and marking the
+ * search term.
+ *
+ * Mackey italicises foreign terms, book titles and the target of every
+ * cross-reference, and that distinction is part of what the entry says.
+ */
+function renderParagraph(text: string, query: string): HTMLElement {
+  const paragraph = element("p");
+  for (const [chunk, italic] of splitItalics(text)) {
+    const host = italic ? element("em") : paragraph;
+    fillWithHighlights(host, chunk, query);
+    if (italic) paragraph.append(host);
+  }
+  return paragraph;
+}
+
+/** Split marked text into runs, each flagged italic or not. */
+function splitItalics(text: string): Array<[string, boolean]> {
+  const runs: Array<[string, boolean]> = [];
+  let buffer = "";
+  let italic = false;
+  for (const character of text) {
+    if (character === "\u0002" || character === "\u0003") {
+      const wanted = character === "\u0002";
+      if (wanted !== italic) {
+        if (buffer) runs.push([buffer, italic]);
+        buffer = "";
+        italic = wanted;
+      }
+      continue;
+    }
+    buffer += character;
+  }
+  if (buffer) runs.push([buffer, italic]);
+  return runs;
+}
+
+function fillWithHighlights(host: HTMLElement, text: string, query: string): void {
+  const needle = query.trim().toLowerCase();
+  if (!needle || needle.length < 2) {
+    host.append(text);
+    return;
+  }
+  const haystack = text.toLowerCase();
+  let from = 0;
+  for (;;) {
+    const at = haystack.indexOf(needle, from);
+    if (at === -1) break;
+    if (at > from) host.append(text.slice(from, at));
+    host.append(element("mark", {}, text.slice(at, at + needle.length)));
+    from = at + needle.length;
+  }
+  if (from < text.length) host.append(text.slice(from));
+}
+
+function highlightUnused(text: string, query: string): HTMLElement {
   const paragraph = element("p");
   const needle = query.trim().toLowerCase();
   if (!needle || needle.length < 2) {
