@@ -197,3 +197,116 @@ def apply(entries: list[dict], fixes: list[BodyFix]) -> int:
         if body:
             entry["body"] = pattern.sub(replace, body)
     return changed
+
+
+# ---------------------------------------------------------------------------
+# Words fused together
+#
+# The scan loses the space between words often enough to matter: "Inthe Masonic
+# phrase", "intoGabaon", "theOrder". Phrase search is built on this text, so a
+# fused pair makes the phrase around it unfindable.
+#
+# Splitting is riskier than substituting, because English is full of compounds
+# that look fused -- flooring, listen, statesmen, bylaws, behave, withhold. Two
+# narrow rules catch the real cases without touching those.
+
+# Mc and Mac names carry an internal capital legitimately.
+_NAME_PREFIX = re.compile(r"^(?:Mc|Mac|De|Di|Du|La|Le|O')[A-Z]")
+_INNER_CAPITAL = re.compile(r"(?<=[a-z])(?=[A-Z])")
+
+LEAD_WORDS = {"the", "a", "an"}
+TAIL_WORDS = {"the", "this", "that", "which", "these", "those", "such",
+              "his", "her", "its", "their", "and"}
+FUNCTION_WORDS = {"in", "of", "to", "and", "is", "at", "by", "for", "with",
+                  "as", "from", "was", "were", "it", "on", "or", "are", "be",
+                  "into", "upon", "that", "this"}
+
+
+def plan_splits(entries: list[dict], attested: set[str] | None = None) -> list[BodyFix]:
+    """Find fused word pairs worth separating.
+
+    Rule one: an internal capital. "theOrder" and "intoGabaon" can only be two
+    words; no English word has a capital in the middle. Mc and Mac names are
+    the exception and are excluded.
+
+    Rule two: an article or preposition fused to a following word, where the
+    pair cannot be an English word -- "forthe", "theritual", "aninteresting".
+    Anything that could be a compound is left alone, which is why "bylaws",
+    "behave" and "withhold" survive.
+    """
+    attested = attested or set()
+    counts = build_counts(entries)
+    raw: Counter[str] = Counter()
+    for entry in entries:
+        for token in TOKEN.findall(entry.get("body", "")):
+            raw[token] += 1
+
+    fixes: list[BodyFix] = []
+    seen: set[str] = set()
+
+    for token, count in raw.items():
+        if len(token) < 6 or _NAME_PREFIX.match(token):
+            continue
+        parts = _INNER_CAPITAL.split(token)
+        if len(parts) == 2 and all(len(p) >= 2 for p in parts):
+            fixes.append(BodyFix(token, " ".join(parts), count, 0.0, 0.0))
+            seen.add(token.lower())
+
+    for word, count in counts.items():
+        # "inthe" and "ofthe" are five characters; a longer minimum skipped
+        # every one of them.
+        if len(word) < 5 or word in seen:
+            continue
+        for cut in range(1, len(word) - 1):
+            head, tail = word[:cut], word[cut:]
+            if counts.get(tail, 0) < COMMON and tail not in TAIL_WORDS:
+                continue
+
+            # A preposition fused to an article -- "inthe", "forthe",
+            # "fromthe" -- cannot be an English word however often it appears,
+            # so neither the rarity test nor the 2007 veto applies. A fused
+            # join is systematic: "Inthe" occurs nine times, and requiring
+            # rarity skipped every one of them.
+            unambiguous = tail in TAIL_WORDS and head in FUNCTION_WORDS
+            if unambiguous:
+                fixes.append(BodyFix(word, f"{head} {tail}", count, 0.0, 0.0))
+                seen.add(word)
+                break
+
+            # An article fused to an ordinary word could be a compound
+            # ("atone" is "a" plus "tone"), so this half keeps both guards.
+            if count > RARE or word in attested:
+                break
+            if head in LEAD_WORDS and len(tail) >= 4:
+                fixes.append(BodyFix(word, f"{head} {tail}", count, 0.0, 0.0))
+                seen.add(word)
+                break
+    return fixes
+
+
+def apply_splits(entries: list[dict], fixes: list[BodyFix]) -> int:
+    """Insert the missing spaces, keeping each occurrence's capitalisation."""
+    mapping = {fix.before.lower(): fix.after for fix in fixes}
+    if not mapping:
+        return 0
+    pattern = re.compile(
+        r"\b(" + "|".join(sorted(map(re.escape, mapping), key=len, reverse=True)) + r")\b",
+        re.IGNORECASE)
+    changed = 0
+
+    def replace(match: re.Match[str]) -> str:
+        nonlocal changed
+        found = match.group(0)
+        replacement = mapping.get(found.lower())
+        if replacement is None:
+            return found
+        changed += 1
+        if found[:1].isupper():
+            return replacement[:1].upper() + replacement[1:]
+        return replacement
+
+    for entry in entries:
+        body = entry.get("body", "")
+        if body:
+            entry["body"] = pattern.sub(replace, body)
+    return changed
