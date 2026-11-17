@@ -218,6 +218,9 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
         split_plan = body_text.plan_splits(
             [e.__dict__ for e in entries], attested)
         body_count += body_text.apply_splits([e.__dict__ for e in entries], split_plan)
+        more = body_text.plan_more_splits([e.__dict__ for e in entries], attested)
+        body_count += body_text.apply_splits([e.__dict__ for e in entries], more)
+        split_plan = split_plan + more
         body_plan = body_plan + split_plan
         (out_dir / "body_fixes.json").write_text(
             json.dumps([f.as_dict() for f in body_plan], indent=2, ensure_ascii=False),

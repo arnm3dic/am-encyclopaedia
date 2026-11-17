@@ -333,3 +333,47 @@ def apply_entry_overrides(entries: list[dict], overrides: dict) -> int:
                 entry["body"] = entry["body"].replace(before, after)
                 changed += 1
     return changed
+
+
+# Compound numbers whose hyphen the scan lost: "thirtythird" for thirty-third.
+NUMBER_TENS = {"twenty", "thirty", "forty", "fifty", "sixty", "seventy",
+               "eighty", "ninety"}
+NUMBER_UNITS = {"first", "second", "third", "fourth", "fifth", "sixth",
+                "seventh", "eighth", "ninth", "one", "two", "three", "four",
+                "five", "six", "seven", "eight", "nine", "thirds", "fourths"}
+
+# Only these tails are safe to split off. "in", "at", "to" and "is" look like
+# joins but are far more often a truncation -- "meetin" is meeting without its
+# g, not "meet in", and splitting it makes the text worse.
+SAFE_TAILS = {"of", "and"}
+
+
+def plan_more_splits(entries: list[dict], attested: set[str] | None = None) -> list[BodyFix]:
+    """Two further classes of fused words that can be told apart with certainty.
+
+    A general split pass cannot be made safe here. Word-pair evidence from the
+    2007 reading accepts "op tion" and "con found"; the trigram model scores
+    the genuine "thisis" and the ordinary "penitent" within a hundredth of each
+    other. So only these two classes are taken.
+    """
+    attested = attested or set()
+    counts = build_counts(entries)
+    fixes: list[BodyFix] = []
+
+    for word, count in counts.items():
+        if len(word) < 5:
+            continue
+        for cut in range(3, len(word) - 2):
+            head, tail = word[:cut], word[cut:]
+            if head in NUMBER_TENS and tail in NUMBER_UNITS:
+                fixes.append(BodyFix(word, f"{head}-{tail}", count, 0.0, 0.0))
+                break
+        else:
+            if word in attested:
+                continue
+            for cut in range(3, len(word) - 1):
+                head, tail = word[:cut], word[cut:]
+                if tail in SAFE_TAILS and counts.get(head, 0) >= COMMON:
+                    fixes.append(BodyFix(word, f"{head} {tail}", count, 0.0, 0.0))
+                    break
+    return fixes
