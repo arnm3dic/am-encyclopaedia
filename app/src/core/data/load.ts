@@ -57,23 +57,45 @@ export function buildDictionary(
   return new Dictionary(headwords, entries, crossrefs);
 }
 
-/** Fetch and assemble the dictionary. `base` is relative to the app root. */
-export async function loadDictionary(base = "data"): Promise<{
+/**
+ * Where the data sits, resolved from this module's own URL.
+ *
+ * A plain relative path is resolved against the *page* URL, and a page served
+ * without a trailing slash drops its last segment: "data/entries.json" under
+ * /artifact/abc123 asks for /artifact/data/entries.json, which does not exist.
+ * This module's URL is stable whatever the page is called, so the data is
+ * found from it instead.
+ */
+function dataUrl(name: string): string {
+  return new URL(`../../data/${name}`, import.meta.url).href;
+}
+
+/** Fetch and assemble the dictionary. */
+export async function loadDictionary(): Promise<{
   dictionary: Dictionary;
   meta: Meta;
 }> {
   const [headwords, file, meta] = await Promise.all([
-    fetchJson<HeadwordRow[]>(`${base}/headwords.json`),
-    fetchJson<EntriesFile>(`${base}/entries.json`),
-    fetchJson<Meta>(`${base}/meta.json`),
+    fetchJson<HeadwordRow[]>(dataUrl("headwords.json")),
+    fetchJson<EntriesFile>(dataUrl("entries.json")),
+    fetchJson<Meta>(dataUrl("meta.json")),
   ]);
   return { dictionary: buildDictionary(headwords, file), meta };
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`could not load ${url}: ${response.status} ${response.statusText}`);
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (cause) {
+    throw new Error(`${url} could not be reached (${String(cause)})`);
   }
-  return (await response.json()) as T;
+  if (!response.ok) {
+    throw new Error(`${url} returned ${response.status} ${response.statusText}`);
+  }
+  try {
+    return (await response.json()) as T;
+  } catch (cause) {
+    throw new Error(`${url} is not valid JSON (${String(cause)})`);
+  }
 }

@@ -541,7 +541,7 @@ function element(
 
 async function start(): Promise<void> {
   try {
-    const loaded = await loadDictionary("data");
+    const loaded = await loadDictionary();
     dictionary = loaded.dictionary;
     meta = loaded.meta;
     buildSearchBar();
@@ -561,8 +561,11 @@ async function start(): Promise<void> {
     }
   } catch (error) {
     root.innerHTML = "";
-    root.append(element("div", { class: "wrap" },
-      "The dictionary could not be loaded. Reload the page to try again."));
+    const box = element("div", { class: "wrap empty" });
+    box.append(element("p", {}, "The dictionary could not be loaded."));
+    box.append(element("p", { class: "sans" }, String(
+      error instanceof Error ? error.message : error)));
+    root.append(box);
     console.error(error);
   }
 }

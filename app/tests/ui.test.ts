@@ -145,10 +145,17 @@ const files: Record<string, unknown> = {
 // Node defines `navigator` as a getter-only global, so it has to be replaced
 // rather than assigned.
 Object.defineProperty(globalThis, "navigator", { value: {}, configurable: true });
-(globalThis as Record<string, unknown>).fetch = async (url: string) => ({
-  ok: true,
-  json: async () => files[url],
-});
+// The app resolves data from its own module URL, so match on the file name
+// rather than on a path the test would have to keep in step.
+const requested: string[] = [];
+(globalThis as Record<string, unknown>).fetch = async (url: string) => {
+  requested.push(String(url));
+  const name = Object.keys(files).find((key) => String(url).endsWith(key));
+  if (!name) {
+    return { ok: false, status: 404, statusText: "Not Found", json: async () => ({}) };
+  }
+  return { ok: true, status: 200, json: async () => files[name] };
+};
 
 await import("../src/ui/app.ts");
 // Let the module's own async start() settle.
@@ -335,4 +342,34 @@ test("markers do not leak into result snippets either", () => {
   const text = app.textContent;
   assert.ok(!text.includes("\u0002") && !text.includes("\u0003"),
     "markers visible on the results screen");
+});
+
+
+test("data is requested by absolute URL, not relative to the page", () => {
+  assert.ok(requested.length >= 3, `only ${requested.length} requests made`);
+  for (const url of requested) {
+    // A bare relative path resolves against the page, and a page served
+    // without a trailing slash drops its last segment -- which is what left
+    // the app reporting that the dictionary could not be loaded.
+    assert.match(url, /^[a-z]+:\/\//, `not absolute: ${url}`);
+    assert.match(url, /\/data\/[a-z]+\.json$/, `wrong shape: ${url}`);
+  }
+});
+
+test("a failed load says what went wrong", async () => {
+  const { loadDictionary } = await import("../src/core/data/load.ts");
+  const saved = (globalThis as Record<string, unknown>).fetch;
+  (globalThis as Record<string, unknown>).fetch = async () => ({
+    ok: false, status: 404, statusText: "Not Found", json: async () => ({}),
+  });
+  try {
+    await loadDictionary();
+    assert.fail("a 404 should have thrown");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    assert.match(message, /404/, `message hides the cause: ${message}`);
+    assert.match(message, /\.json/, `message does not name the file: ${message}`);
+  } finally {
+    (globalThis as Record<string, unknown>).fetch = saved;
+  }
 });
