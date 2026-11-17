@@ -30,7 +30,17 @@ from scipy import ndimage
 RENDER_DPI = 300
 INK_THRESHOLD = 128          # 8-bit grey below this counts as ink
 MIN_INK_PIXELS = 20          # smaller marks are speckle, not letters
-BOLD_RATIO = 1.25            # stroke width this many times the page median = bold
+
+# Bold is decided per page, against that page's own body weight.
+#
+# The median alone is not a safe reference. Volume 2 was scanned more heavily,
+# and its body text is bimodal -- many words measure 4.47 where volume 1's
+# measure 4.00 -- so a median-derived threshold sits below real body text and
+# floods the page with false positives. The 75th percentile tracks the heavier
+# mode, so both volumes get a threshold above their own body weight.
+BOLD_RATIO = 1.25            # against the median
+BOLD_MARGIN = 0.9            # ...and at least this far above the 75th percentile
+LOOSE_MARGIN = 0.25          # for recovering a headword's first word
 
 
 class ExtractionError(RuntimeError):
@@ -63,6 +73,55 @@ class Word:
         return self.top + self.height // 2
 
 
+def page_to_dict(page: "Page") -> dict:
+    """Serialise OCR output so parsing can be re-run without re-OCR.
+
+    OCR is the expensive stage: about five seconds a page, forty minutes for
+    the book. Parsing is milliseconds. Caching at this boundary means parser
+    changes cost nothing to re-apply, which matters because the correction
+    pass iterates on exactly that code.
+    """
+    return {
+        "pdf_page": page.pdf_page,
+        "width": page.width,
+        "height": page.height,
+        "gutter_x": page.gutter_x,
+        "median_stroke": round(page.median_stroke, 3),
+        "p75_stroke": round(page.p75_stroke, 3),
+        "mean_conf": round(page.mean_conf, 2),
+        "words": [
+            [w.text, w.left, w.top, w.width, w.height,
+             round(w.conf, 1), round(w.stroke_width, 3)]
+            for w in page.words
+        ],
+    }
+
+
+def page_from_dict(data: dict) -> "Page":
+    """Rebuild a Page from the cache, re-deriving every threshold.
+
+    Thresholds are recomputed rather than stored, so tuning them takes effect
+    on the next parse without touching the cache.
+    """
+    words = [Word(text=t, left=l, top=tp, width=w, height=h, conf=c, stroke_width=s)
+             for t, l, tp, w, h, c, s in data["words"]]
+    page = Page(pdf_page=data["pdf_page"], image_path=Path(""),
+                width=data["width"], height=data["height"], words=words,
+                gutter_x=data["gutter_x"], mean_conf=data["mean_conf"])
+    if words:
+        strokes = np.array([word.stroke_width for word in words])
+        page.median_stroke = float(np.median(strokes))
+        page.p75_stroke = float(np.percentile(strokes, 75))
+        page.bold_threshold = max(page.median_stroke * BOLD_RATIO,
+                                  page.p75_stroke + BOLD_MARGIN)
+        page.loose_threshold = page.p75_stroke + LOOSE_MARGIN
+        for word in words:
+            word.bold = word.stroke_width >= page.bold_threshold
+            word.column = 0 if (word.left + word.width // 2) < page.gutter_x else 1
+        _assign_lines(page)
+    return page
+
+
 @dataclass
 class Page:
     pdf_page: int
@@ -72,6 +131,9 @@ class Page:
     words: list[Word] = field(default_factory=list)
     gutter_x: int = 0
     median_stroke: float = 0.0
+    p75_stroke: float = 0.0
+    bold_threshold: float = 0.0
+    loose_threshold: float = 0.0
     mean_conf: float = 0.0
 
 
@@ -183,9 +245,12 @@ def read_page(pdf_path: Path, pdf_page: int, image_dir: Path) -> Page:
 
     strokes = np.array([word.stroke_width for word in words])
     page.median_stroke = float(np.median(strokes))
-    bold_threshold = page.median_stroke * BOLD_RATIO
+    page.p75_stroke = float(np.percentile(strokes, 75))
+    page.bold_threshold = max(page.median_stroke * BOLD_RATIO,
+                              page.p75_stroke + BOLD_MARGIN)
+    page.loose_threshold = page.p75_stroke + LOOSE_MARGIN
     for word in words:
-        word.bold = word.stroke_width >= bold_threshold
+        word.bold = word.stroke_width >= page.bold_threshold
 
     confidences = [w.conf for w in words if w.conf >= 0]
     page.mean_conf = float(np.mean(confidences)) if confidences else 0.0

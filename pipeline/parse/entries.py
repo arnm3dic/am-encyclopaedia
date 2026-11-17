@@ -24,7 +24,7 @@ TERMINATES = (".", ".’", ".\"", ".'")
 ABBREVIATIONS = {
     "st.", "ste.", "mt.", "dr.", "mr.", "mrs.", "rev.", "hon.", "col.",
     "gen.", "capt.", "maj.", "sgt.", "jr.", "sr.", "no.", "vol.", "pt.",
-    "ch.", "fr.", "ger.", "lat.", "heb.", "gr.", "lodge.",
+    "ch.", "fr.", "ger.", "lat.", "heb.", "gr.",
 }
 _INITIAL = re.compile(r"^[A-Z]\.$")
 
@@ -46,6 +46,7 @@ class Entry:
     region: str
     confidence: float
     is_continuation: bool = False
+    rejected: bool = False
     issues: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict:
@@ -60,6 +61,7 @@ class Entry:
             "region": self.region,
             "confidence": round(self.confidence, 1),
             "is_continuation": self.is_continuation,
+            "rejected": self.rejected,
             "issues": self.issues,
         }
 
@@ -106,11 +108,12 @@ def _join_lines(words: list[Word]) -> str:
     return re.sub(r"\s{2,}", " ", text).strip()
 
 
-# Stroke width is quantised by the distance transform -- body text measures
-# 4.00 and the next step up is 4.47 -- so this threshold sits just above the
-# page median rather than at a fraction that could fall between two steps.
-LOOSE_BOLD_RATIO = 1.05
 SENTENCE_END = (".", ";", ":", "!", "?", "’", "\"")
+
+# A sentence may close with the stop inside or before a quotation mark, and
+# Mackey quotes constantly. Matching only a bare "." missed 81 real headwords
+# in volume 2 alone, every one of them following a quoted passage.
+SENTENCE_CLOSE = re.compile(r"[.!?][\"'‘’“”)\]]*$")
 CONNECTORS = {"of", "the", "and", "de", "du", "da", "von", "van", "le", "la", "des"}
 ROMAN_NUMERAL = re.compile(r"^(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)\.$")
 
@@ -216,9 +219,36 @@ def _headword_spans(words: list[Word], loose_threshold: float = 0.0) -> list[tup
         start = _extend_backwards(words, index, loose_threshold) if loose_threshold else index
         if spans and start <= spans[-1][1]:
             start = index                       # never overlap the previous span
-        spans.append((start, end))
+
+        # A span that nothing closed before it is kept, but marked. A headword
+        # dropped in silence is invisible to a reader who searches for it; a
+        # spurious one is visible and can be struck out in review. So the
+        # doubtful ones are carried through to the correction pass rather than
+        # discarded here.
+        anchored = _follows_sentence_end(words, start)
+        spans.append((start, end, anchored))
         index = end + 1
     return spans
+
+
+def _follows_sentence_end(words: list[Word], start: int) -> bool:
+    """A headword opens an entry, so something must have closed the last one.
+
+    This is the check that separates headwords from italics. Mackey sets
+    French and German book titles in italic throughout, and on volume 2's
+    heavier scan their strokes measure as thick as bold -- "dans la Voie
+    Profane" and the like then parse as headwords. Weight cannot tell them
+    apart, but position can: a headword follows a full stop or begins the
+    page, while an italic title sits inside a sentence.
+    """
+    if start == 0:
+        return True
+    previous = words[start - 1].text.rstrip()
+    if not previous:
+        return True
+    if _is_abbreviation(previous):
+        return False                 # "St." mid-headword, not a sentence end
+    return bool(SENTENCE_CLOSE.search(previous))
 
 
 def parse_page(page: Page, head: RunningHead, region: str) -> list[Entry]:
@@ -227,7 +257,7 @@ def parse_page(page: Page, head: RunningHead, region: str) -> list[Entry]:
     if not words:
         return []
 
-    spans = _headword_spans(words, loose_threshold=page.median_stroke * LOOSE_BOLD_RATIO)
+    spans = _headword_spans(words, loose_threshold=page.loose_threshold)
     entries: list[Entry] = []
 
     def confidence_of(slice_: list[Word]) -> float:
@@ -240,7 +270,8 @@ def parse_page(page: Page, head: RunningHead, region: str) -> list[Entry]:
                       printed_page=head.printed_page, region=region,
                       confidence=confidence_of(words), is_continuation=True)]
 
-    first_start = spans[0][0]
+    anchored_spans = [s for s in spans if s[2]]
+    first_start = (anchored_spans[0][0] if anchored_spans else spans[0][0])
     if first_start > 0:
         lead = words[:first_start]
         entries.append(Entry(headword="", body=_join_lines(lead),
@@ -248,7 +279,7 @@ def parse_page(page: Page, head: RunningHead, region: str) -> list[Entry]:
                              region=region, confidence=confidence_of(lead),
                              is_continuation=True))
 
-    for position, (start, end) in enumerate(spans):
+    for position, (start, end, anchored) in enumerate(spans):
         stop = spans[position + 1][0] if position + 1 < len(spans) else len(words)
         headword = _join_lines(words[start:end + 1])
         body = _join_lines(words[end + 1:stop])
@@ -257,8 +288,10 @@ def parse_page(page: Page, head: RunningHead, region: str) -> list[Entry]:
             issues.append("empty_body")
         if len(headword) < 3:
             issues.append("short_headword")
+        if not anchored:
+            issues.append("unanchored")
         entries.append(Entry(headword=headword, body=body, pdf_page=page.pdf_page,
                              printed_page=head.printed_page, region=region,
                              confidence=confidence_of(words[start:stop]),
-                             issues=issues))
+                             rejected=not anchored, issues=issues))
     return entries
