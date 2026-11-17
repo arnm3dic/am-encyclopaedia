@@ -15,7 +15,7 @@
   gets it too, and the next visit has the update.
 */
 
-const VERSION = "am-6";
+const VERSION = "am-7";
 const CACHE = `am-encyclopaedia-${VERSION}`;
 
 // Paths are resolved against the worker's own scope, so they hold wherever
@@ -35,6 +35,7 @@ const SHELL = [
   "data/meta.json",
   "img/title-page.png",
   "img/icon-192.png",
+  "img/apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (event) => {
