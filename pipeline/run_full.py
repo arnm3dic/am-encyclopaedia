@@ -33,7 +33,7 @@ os.environ.setdefault("OMP_THREAD_LIMIT", "1")
 
 from pipeline.extract.ocr import (ExtractionError, page_from_dict, page_to_dict,
                                   read_page)
-from pipeline.corrections import ocr_fixes, triage
+from pipeline.corrections import body_text, ocr_fixes, triage
 from pipeline.parse import regions
 from pipeline.parse.entries import Entry, parse_page
 from pipeline.validate import checks
@@ -191,6 +191,24 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
                 raw["printed_page"] = folio_by_page.get(record["pdf_page"])
 
     entries = stitch(records)
+
+    # Body text carries the engine's habitual confusions -- "Maaonic" for
+    # Masonic -- which silently break definition search. Repair them against
+    # three tests: the spelling is rare, its neighbour is common, and it does
+    # not look like English by the corpus's own trigrams. The 2007 OCR layer
+    # over volume 1 vetoes anything it also read.
+    body_count = 0
+    body_plan: list = []
+    if correct:
+        as_dicts = [{"body": e.body} for e in entries]
+        attested = body_text.second_opinion(out_dir.parent / "omnipage2007.txt")
+        body_plan = body_text.plan(as_dicts, attested)
+        body_count = body_text.apply(
+            [{"body": e.body} if False else e.__dict__ for e in entries], body_plan)
+        (out_dir / "body_fixes.json").write_text(
+            json.dumps([f.as_dict() for f in body_plan], indent=2, ensure_ascii=False),
+            encoding="utf-8")
+
     issues = checks.check(entries)
     summary = checks.summarise(entries, issues)
 
@@ -211,6 +229,8 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
 
     summary.update({
         "candidates_promoted": promoted,
+        "body_text_fixes": body_count,
+        "body_text_token_types": len(body_plan),
         "candidates_considered": len(decisions),
         "ocr_headword_fixes": len(fixes),
         "pages_processed": len(records),
