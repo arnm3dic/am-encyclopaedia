@@ -378,6 +378,12 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
             body_count += body_text.apply([e.__dict__ for e in entries], against)
             body_plan = body_plan + against
 
+            # Words the scan broke in two at a column or page break.
+            joins = body_text.plan_joins(
+                [e.__dict__ for e in entries], lexicon, trusted)
+            body_count += body_text.apply_joins([e.__dict__ for e in entries], joins)
+            body_plan = body_plan + joins
+
         # Corrections the 1874 printing attests to, scoped to the article they
         # were found in. These come last among the word-level repairs so that
         # a word the re-read already fixed is not reconsidered.

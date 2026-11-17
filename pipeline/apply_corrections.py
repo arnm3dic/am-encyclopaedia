@@ -70,6 +70,20 @@ def main() -> int:
     else:
         print("re-read: not run yet")
 
+    # Words the ink settled where the two printings disagreed.
+    adjudicated_path = out_dir / "adjudicated.json"
+    if adjudicated_path.exists():
+        decided = json.loads(adjudicated_path.read_text(encoding="utf-8"))
+        placed = {(f["pdf_page"], f["left"], f["top"]) for f in word_fixes}
+        added = 0
+        for fix in decided["fixes"]:
+            if (fix["pdf_page"], fix["left"], fix["top"]) in placed:
+                continue
+            word_fixes.append(fix)
+            added += 1
+        print(f"adjudicated: {added} more corrections decided by the page image, "
+              f"{len(decided['unresolved'])} the ink could not settle")
+
     (out_dir / "word_fixes.json").write_text(
         json.dumps(word_fixes, ensure_ascii=False, indent=1), encoding="utf-8")
 

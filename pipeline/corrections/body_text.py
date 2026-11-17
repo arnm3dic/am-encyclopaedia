@@ -225,6 +225,70 @@ def plan_against(entries: list[dict], lexicon: Counter, trusted: set[str],
     return fixes
 
 
+def plan_joins(entries: list[dict], lexicon: Counter, trusted: set[str]) -> list[BodyFix]:
+    """Rejoin a word the scan broke in two.
+
+    A word hyphenated across a line is normally put back together when the
+    lines are joined, but not when the break falls between columns or pages,
+    or when the hyphen itself did not survive the scan. What is left is two
+    fragments sitting side by side: "sym bolism", "jurisdic tion", "an cient".
+    Each fragment is invisible to every other repair here, because none of
+    them can see that the word continues in the next token.
+
+    The test is the same one used everywhere else, and it needs the other
+    printing to work: at least one of the two pieces is a word neither
+    printing uses, and the two run together are a word the 1874 book uses.
+    "Tory" and "his" are both ordinary words, but "his tory" joins to
+    "history", and only one side has to be unattested for that to be safe.
+    """
+    known = set(trusted) | {word for word, count in lexicon.items() if count >= 1}
+    joins: Counter[tuple[str, str]] = Counter()
+    counts = build_counts(entries)
+
+    for entry in entries:
+        tokens = TOKEN.findall(entry.get("body", ""))
+        for first, second in zip(tokens, tokens[1:]):
+            left, right = first.lower(), second.lower()
+            if len(left) < 2 or len(right) < 2:
+                continue
+            if left in known and right in known:
+                continue
+            joined = left + right
+            if lexicon.get(joined, 0) >= 5 or counts.get(joined, 0) >= COMMON:
+                joins[(left, right)] += 1
+
+    return [BodyFix(f"{a} {b}", a + b, n, 0.0, 0.0) for (a, b), n in joins.items()]
+
+
+def apply_joins(entries: list[dict], fixes: list[BodyFix]) -> int:
+    """Close the gap, keeping the first fragment's capitalisation."""
+    changed = 0
+    for fix in fixes:
+        left, right = fix.before.split(" ", 1)
+        pattern = re.compile(
+            rf"(?<![A-Za-zÀ-ɏ])({re.escape(left)})(\s+)({re.escape(right)})"
+            rf"(?![A-Za-zÀ-ɏ])", re.IGNORECASE)
+
+        def shaped(match: re.Match[str]) -> str:
+            head = match.group(1)
+            word = fix.after
+            if head.isupper() and len(head) > 1:
+                return word.upper()
+            if head[:1].isupper():
+                return word[:1].upper() + word[1:]
+            return word
+
+        for entry in entries:
+            body = entry.get("body", "")
+            if not body:
+                continue
+            body, count = pattern.subn(shaped, body)
+            if count:
+                entry["body"] = body
+                changed += count
+    return changed
+
+
 def apply(entries: list[dict], fixes: list[BodyFix]) -> int:
     """Rewrite the body text, preserving each occurrence's capitalisation."""
     mapping = {fix.before: fix.after for fix in fixes}
