@@ -12,6 +12,7 @@
 
 import { loadDictionary } from "../core/data/load.ts";
 import { stripMarkers } from "../core/normalise.ts";
+import * as reading from "./reading.ts";
 import type { Dictionary, Result, Meta } from "../core/search/engine.ts";
 import { Band, BAND_LABEL } from "../core/search/engine.ts";
 
@@ -28,6 +29,10 @@ let history: Screen[] = [];
 const root = document.getElementById("app") as HTMLElement;
 const backButton = document.getElementById("back") as HTMLButtonElement;
 const searchbar = document.getElementById("searchbar") as HTMLElement;
+const typeset = document.getElementById("typeset") as HTMLButtonElement | null;
+
+let preferences = reading.load();
+let optionsPanel: HTMLElement | null = null;
 
 /*
   The search field is created once and never replaced.
@@ -419,6 +424,21 @@ function emptyState(query: string): HTMLElement {
   return box;
 }
 
+/* ---------- reading options ---------- */
+
+function buildReadingOptions(): void {
+  if (!typeset) return;
+  optionsPanel = reading.buildPanel(preferences, () => render());
+  searchbar.parentElement?.insertBefore(optionsPanel, searchbar.nextSibling);
+
+  typeset.addEventListener("click", () => {
+    if (!optionsPanel) return;
+    const open = optionsPanel.hidden;
+    optionsPanel.hidden = !open;
+    typeset.setAttribute("aria-expanded", String(open));
+  });
+}
+
 /* ---------- text ---------- */
 
 function splitParagraphs(body: string): string[] {
@@ -545,6 +565,8 @@ async function start(): Promise<void> {
     dictionary = loaded.dictionary;
     meta = loaded.meta;
     buildSearchBar();
+    buildReadingOptions();
+    reading.apply(preferences);
     render();
 
     // Build the definition index once the first paint is done, then repeat the

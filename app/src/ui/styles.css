@@ -460,3 +460,75 @@ mark {
   color: var(--craft);
   border-top: 1px solid var(--rule-strong);
 }
+
+/* ---------- reading options ---------- */
+
+.typeset {
+  margin-left: auto;
+  appearance: none;
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.typeset[aria-expanded="true"] { border-color: var(--craft); color: var(--craft); }
+
+.options {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-sunk);
+}
+.options[hidden] { display: none; }
+.options .wrap { padding-top: 0.875rem; padding-bottom: 0.875rem; }
+
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3125rem 0;
+}
+.option-row span {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.steps { display: flex; gap: 2px; }
+.steps button {
+  appearance: none;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-soft);
+  font-family: var(--serif);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.steps button + button { border-left: 0; }
+.steps button[aria-pressed="true"] {
+  background: var(--craft);
+  border-color: var(--craft);
+  color: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  .steps button[aria-pressed="true"] { color: #12131a; }
+}
+
+/* Reading mode: the book, with the apparatus out of the way. */
+body.reading .searchbar { display: none; }
+body.reading .entry { padding-top: 2.5rem; }
+body.reading .entry-body { font-size: 1.1875rem; line-height: 1.8; }
+body.reading .entry h1 { font-size: 1.875rem; }
+body.reading .wrap { max-width: 32rem; }
+body.reading .result-body { -webkit-line-clamp: 3; }
+
+/* Three text sizes, applied to the entry text rather than the chrome. */
+body.size-s .entry-body { font-size: 1rem; }
+body.size-l .entry-body { font-size: 1.1875rem; line-height: 1.74; }
+body.size-xl .entry-body { font-size: 1.3125rem; line-height: 1.78; }
+body.reading.size-l .entry-body { font-size: 1.3125rem; }
+body.reading.size-xl .entry-body { font-size: 1.4375rem; line-height: 1.82; }

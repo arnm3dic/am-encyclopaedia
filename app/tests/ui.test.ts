@@ -17,8 +17,41 @@ import { fileURLToPath } from "node:url";
 
 /* ---------- a DOM, just enough of one ---------- */
 
+class StubClassList {
+  private readonly names = new Set<string>();
+  private readonly owner: StubNode;
+  // Written out rather than declared in the parameter list: a parameter
+  // property emits runtime code and cannot be type-stripped, like an enum.
+  constructor(owner: StubNode) {
+    this.owner = owner;
+  }
+  add(...values: string[]): void {
+    for (const v of values) this.names.add(v);
+    this.sync();
+  }
+  remove(...values: string[]): void {
+    for (const v of values) this.names.delete(v);
+    this.sync();
+  }
+  toggle(value: string, force?: boolean): void {
+    const on = force ?? !this.names.has(value);
+    if (on) this.names.add(value);
+    else this.names.delete(value);
+    this.sync();
+  }
+  contains(value: string): boolean {
+    return this.names.has(value);
+  }
+  private sync(): void {
+    this.owner.setAttribute("class", [...this.names].join(" "));
+  }
+}
+
 class StubNode {
   tagName: string;
+  parentElement: StubNode | null = null;
+  classList: StubClassList;
+  type = "";
   children: StubNode[] = [];
   attributes = new Map<string, string>();
   style: Record<string, string> = {};
@@ -31,6 +64,20 @@ class StubNode {
 
   constructor(tagName: string) {
     this.tagName = tagName.toLowerCase();
+    this.classList = new StubClassList(this);
+  }
+
+  insertBefore(node: StubNode, reference: StubNode | null): void {
+    const at = reference ? this.children.indexOf(reference) : -1;
+    if (at === -1) this.children.push(node);
+    else this.children.splice(at, 0, node);
+    node.parentElement = this;
+  }
+
+  get nextSibling(): StubNode | null {
+    const siblings = this.parentElement?.children ?? [];
+    const at = siblings.indexOf(this);
+    return at === -1 ? null : siblings[at + 1] ?? null;
   }
 
   set textContent(value: string) {
@@ -55,6 +102,7 @@ class StubNode {
         text.textContent = node;
         this.children.push(text);
       } else {
+        node.parentElement = this;
         this.children.push(node);
       }
     }
@@ -88,8 +136,9 @@ class StubNode {
   }
   setSelectionRange(): void {}
 
-  /** Type into this node as a person would, character by character. */
-  type(text: string): void {
+  /** Type into this node as a person would, character by character.
+   *  Named typeInto because `type` is an element property the app sets. */
+  typeInto(text: string): void {
     for (const character of text) {
       this.value += character;
       this.dispatch("input");
@@ -98,6 +147,9 @@ class StubNode {
 
   get className(): string {
     return this.attributes.get("class") ?? "";
+  }
+  set className(value: string) {
+    this.attributes.set("class", value);
   }
 
   /** Every node in the subtree, this one included. */
@@ -116,13 +168,28 @@ class StubNode {
 const app = new StubNode("main");
 const backButton = new StubNode("button");
 const searchbar = new StubNode("div");
+const typeset = new StubNode("button");
+const bodyNode = new StubNode("body");
+const shell = new StubNode("div");
+shell.append(searchbar);
 let activeElement: StubNode | null = null;
 
 const nodesById: Record<string, StubNode> = {
-  app, back: backButton, searchbar,
+  app, back: backButton, searchbar, typeset,
 };
 
+const store = new Map<string, string>();
+Object.defineProperty(globalThis, "localStorage", {
+  configurable: true,
+  value: {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => void store.set(key, value),
+    removeItem: (key: string) => void store.delete(key),
+  },
+});
+
 const documentStub = {
+  body: bodyNode,
   createElement: (tag: string) => new StubNode(tag),
   getElementById: (id: string) => nodesById[id] ?? new StubNode("div"),
   get activeElement() {
@@ -230,7 +297,7 @@ function suggestionButtons(): StubNode[] {
 test("typed characters stay in the box", () => {
   const box = searchInput();
   box.value = "";
-  box.type("acac");
+  box.typeInto("acac");
   assert.equal(box.value, "acac", "the box lost what was typed into it");
   assert.equal(searchInput(), box, "the input element was replaced while typing");
 });
@@ -238,7 +305,7 @@ test("typed characters stay in the box", () => {
 test("suggestions appear while typing, without pressing anything", () => {
   const box = searchInput();
   box.value = "";
-  box.type("tetra");
+  box.typeInto("tetra");
 
   const options = suggestionButtons();
   assert.ok(options.length > 0, "no suggestions offered");
@@ -251,9 +318,9 @@ test("suggestions appear while typing, without pressing anything", () => {
 test("suggestions narrow as more characters arrive", () => {
   const box = searchInput();
   box.value = "";
-  box.type("te");
+  box.typeInto("te");
   const broad = suggestionButtons().length;
-  box.type("tragram");
+  box.typeInto("tragram");
   const narrow = suggestionButtons().length;
   assert.ok(narrow <= broad, `got wider: ${broad} then ${narrow}`);
   assert.ok(narrow > 0, "narrowing lost everything");
@@ -262,7 +329,7 @@ test("suggestions narrow as more characters arrive", () => {
 test("the matched part of each suggestion is marked", () => {
   const box = searchInput();
   box.value = "";
-  box.type("acac");
+  box.typeInto("acac");
   const marks = searchbar.all().filter((node) => node.tagName === "mark");
   assert.ok(marks.length > 0, "nothing marked in the suggestions");
   assert.ok(marks.every((m) => m.textContent.toLowerCase() === "acac"),
@@ -272,7 +339,7 @@ test("the matched part of each suggestion is marked", () => {
 test("choosing a suggestion opens that entry", () => {
   const box = searchInput();
   box.value = "";
-  box.type("acacia");
+  box.typeInto("acacia");
   const first = suggestionButtons()[0];
   const wanted = first.textContent;
   first.click();
@@ -287,7 +354,7 @@ test("choosing a suggestion opens that entry", () => {
 test("a misspelling still offers the right entry", () => {
   const box = searchInput();
   box.value = "";
-  box.type("Kadsoh");
+  box.typeInto("Kadsoh");
   const options = suggestionButtons();
   assert.ok(options.length > 0, "no near matches offered");
   assert.ok(options.some((o) => o.textContent.toLowerCase().includes("kadosh")),
@@ -297,7 +364,7 @@ test("a misspelling still offers the right entry", () => {
 test("Enter searches everything rather than opening a suggestion", () => {
   const box = searchInput();
   box.value = "";
-  box.type("temple");
+  box.typeInto("temple");
   box.dispatch("keydown", { key: "Enter" });
   assert.ok(/results? for/.test(app.textContent),
     `expected a results screen, got: ${app.textContent.slice(0, 100)}`);
@@ -306,7 +373,7 @@ test("Enter searches everything rather than opening a suggestion", () => {
 test("Escape dismisses the suggestions", () => {
   const box = searchInput();
   box.value = "";
-  box.type("tem");
+  box.typeInto("tem");
   assert.ok(suggestionButtons().length > 0, "nothing to dismiss");
   box.dispatch("keydown", { key: "Escape" });
   assert.equal(suggestionButtons().length, 0, "suggestions survived Escape");
@@ -315,7 +382,7 @@ test("Escape dismisses the suggestions", () => {
 test("italics from the book are rendered as emphasis", () => {
   const box = searchInput();
   box.value = "";
-  box.type("arts");
+  box.typeInto("arts");
   const option = suggestionButtons().find((o) => o.textContent.startsWith("Arts."));
   assert.ok(option, "Arts. not offered");
   option!.click();
@@ -337,7 +404,7 @@ test("italic markers never reach the reader as characters", () => {
 test("markers do not leak into result snippets either", () => {
   const box = searchInput();
   box.value = "";
-  box.type("masonry");
+  box.typeInto("masonry");
   box.dispatch("keydown", { key: "Enter" });
   const text = app.textContent;
   assert.ok(!text.includes("\u0002") && !text.includes("\u0003"),
@@ -372,4 +439,64 @@ test("a failed load says what went wrong", async () => {
   } finally {
     (globalThis as Record<string, unknown>).fetch = saved;
   }
+});
+
+/* ---------- reading options ---------- */
+
+function optionButtons(): StubNode[] {
+  return shell.all().filter((n) => n.tagName === "button" &&
+    n.parentElement?.className.includes("steps"));
+}
+
+test("reading options open from the masthead", () => {
+  const panel = shell.all().find((n) => n.className.includes("options"));
+  assert.ok(panel, "no options panel was built");
+  assert.equal(panel!.hidden, true, "panel starts open");
+  typeset.click();
+  assert.equal(panel!.hidden, false, "panel did not open");
+  assert.equal(typeset.getAttribute("aria-expanded"), "true");
+});
+
+test("text size offers four steps with one chosen", () => {
+  const sizes = optionButtons().filter((b) => b.getAttribute("aria-label") &&
+    ["Small", "Default", "Large", "Largest"].includes(b.getAttribute("aria-label")!));
+  assert.equal(sizes.length, 4, `expected four sizes, got ${sizes.length}`);
+  const pressed = sizes.filter((b) => b.getAttribute("aria-pressed") === "true");
+  assert.equal(pressed.length, 1, "exactly one size should be chosen");
+  assert.equal(pressed[0].getAttribute("aria-label"), "Default");
+});
+
+test("choosing a larger size applies it to the page and is remembered", () => {
+  const large = optionButtons().find((b) => b.getAttribute("aria-label") === "Large");
+  assert.ok(large, "no large option");
+  large!.click();
+  assert.ok(bodyNode.classList.contains("size-l"), "size not applied to the body");
+  assert.ok(!bodyNode.classList.contains("size-m"), "old size left behind");
+  assert.ok(store.get("am-reading")?.includes("\"l\""), "preference not stored");
+});
+
+test("reading mode toggles on and off", () => {
+  const toggle = optionButtons().find((b) => b.textContent === "Off");
+  assert.ok(toggle, "no reading-mode toggle");
+  toggle!.click();
+  assert.ok(bodyNode.classList.contains("reading"), "reading mode not applied");
+  assert.equal(toggle!.textContent, "On");
+  assert.equal(toggle!.getAttribute("aria-pressed"), "true");
+
+  toggle!.click();
+  assert.ok(!bodyNode.classList.contains("reading"), "reading mode not cleared");
+  assert.equal(toggle!.textContent, "Off");
+});
+
+test("a stored preference is restored, and a broken one does not break the page", async () => {
+  const module = await import("../src/ui/reading.ts");
+  store.set("am-reading", JSON.stringify({ size: "xl", reading: true }));
+  assert.deepEqual(module.load(), { size: "xl", reading: true });
+
+  store.set("am-reading", "not json at all");
+  assert.deepEqual(module.load(), { size: "m", reading: false },
+    "a corrupt preference should fall back, not throw");
+
+  store.set("am-reading", JSON.stringify({ size: "enormous" }));
+  assert.equal(module.load().size, "m", "an unknown size should fall back");
 });
