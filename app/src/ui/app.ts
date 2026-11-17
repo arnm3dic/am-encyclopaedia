@@ -88,25 +88,34 @@ function render(): void {
 function renderHome(): HTMLElement {
   const wrap = element("div", { class: "wrap" });
 
-  // The book opens on its own title page rather than on anything invented.
-  const cover = element("section", { class: "cover" });
-  const figure = element("figure");
-  const image = element("img", {
-    src: new URL("../img/title-page.png", import.meta.url).href,
-    alt: "Title page: An Encyclopaedia of Freemasonry and Its Kindred Sciences, "
-       + "by Albert G. Mackey, new and revised edition, 1914",
-    width: "760",
-    height: "1277",
-  });
-  figure.append(image, element("figcaption", {},
-    `${dictionary!.size.toLocaleString()} articles, searchable offline`));
-  cover.append(figure);
-  wrap.append(cover);
+  wrap.append(renderLogo());
 
   const recent = renderRecent();
   if (recent) wrap.append(recent);
   wrap.append(renderAlphabet());
   return wrap;
+}
+
+/**
+ * The title page, redrawn.
+ *
+ * The scan of it was handsome but it was a photograph of paper: a fixed grey
+ * image that had to be inverted at night and shipped 116 KB to say what the
+ * app can set itself. Drawn in the app's own type and colour it scales, reads
+ * correctly in both themes, and costs nothing.
+ */
+function renderLogo(): HTMLElement {
+  const logo = element("section", { class: "logo" });
+  const mark = element("div", { class: "logo-mark", "aria-hidden": "true" });
+  mark.append(element("span", {}, "AM"));
+  logo.append(mark);
+  logo.append(element("p", { class: "logo-line" }, "New and revised edition"));
+  logo.append(element("p", { class: "logo-of" }, "An Encyclop\u00e6dia of"));
+  logo.append(element("h1", { class: "logo-title" }, "Freemasonry"));
+  logo.append(element("p", { class: "logo-by" }, "Albert G. Mackey"));
+  logo.append(element("p", { class: "logo-line" },
+    `${dictionary!.size.toLocaleString()} articles, searchable offline`));
+  return logo;
 }
 
 function renderRecent(): HTMLElement | null {

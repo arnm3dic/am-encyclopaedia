@@ -15,7 +15,7 @@
   gets it too, and the next visit has the update.
 */
 
-const VERSION = "am-4";
+const VERSION = "am-5";
 const CACHE = `am-encyclopaedia-${VERSION}`;
 
 // Paths are resolved against the worker's own scope, so they hold wherever
@@ -33,7 +33,6 @@ const SHELL = [
   "data/headwords.json",
   "data/entries.json",
   "data/meta.json",
-  "img/title-page.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -56,7 +55,7 @@ self.addEventListener("activate", (event) => {
       .filter((name) => name.startsWith("am-encyclopaedia-") && name !== CACHE)
       .map((name) => caches.delete(name)));
     // Older builds used a bare version string as the cache name.
-    for (const legacy of ["am-1", "am-2", "am-3"]) await caches.delete(legacy);
+    for (const legacy of ["am-1", "am-2", "am-3", "am-4"]) await caches.delete(legacy);
     await self.clients.claim();
   })());
 });

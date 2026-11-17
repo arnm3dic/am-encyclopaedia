@@ -554,38 +554,71 @@ body.reading.size-l .entry-body { font-size: 1.3125rem; }
 body.reading.size-xl .entry-body { font-size: 1.4375rem; line-height: 1.82; }
 
 
-/* ---------- the book's own title page ---------- */
+/* ---------- title block ---------- */
 
-.cover { margin: 1.75rem 0 0; }
-
-.cover figure {
-  margin: 0;
-  background: #fbfaf7;
-  border: 1px solid var(--rule-strong);
-  padding: 0.75rem;
+/*
+  The book's title page, set rather than photographed. Centred, with the
+  display line carrying the weight, which is how the page itself is composed.
+*/
+.logo {
+  text-align: center;
+  padding: 2.25rem 0 1.5rem;
+  border-bottom: 1px solid var(--rule);
 }
 
-.cover img { display: block; width: 100%; height: auto; }
-
-/* The scan is black on white; invert it at night rather than glare. */
-body.theme-dark .cover img { filter: invert(1) hue-rotate(180deg) brightness(0.92); }
-body.theme-dark .cover figure { background: #0f1014; }
-@media (prefers-color-scheme: dark) {
-  body:not(.theme-light) .cover img {
-    filter: invert(1) hue-rotate(180deg) brightness(0.92);
-  }
-  body:not(.theme-light) .cover figure { background: #0f1014; }
+.logo-mark {
+  width: 3.25rem;
+  height: 3.25rem;
+  margin: 0 auto 1.25rem;
+  background: var(--craft);
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
 }
 
-.cover figcaption {
+.logo-mark span {
+  font-family: var(--serif);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-indent: 0.06em;
+}
+
+.logo-line {
   font-family: var(--sans);
   font-size: 0.75rem;
   color: var(--ink-faint);
-  padding-top: 0.625rem;
-  text-align: center;
+  margin: 0;
 }
 
-body.reading .cover { display: none; }
+.logo-of {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+  margin: 0.875rem 0 0.125rem;
+}
+
+.logo-title {
+  font-size: 2rem;
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0 0 0.5rem;
+  color: var(--craft);
+}
+
+.logo-by {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+  margin: 0 0 1.125rem;
+}
+
+body.reading .logo { display: none; }
+
+@media (min-width: 40rem) {
+  .logo-title { font-size: 2.5rem; }
+}
 
 /* ---------- recently viewed ---------- */
 

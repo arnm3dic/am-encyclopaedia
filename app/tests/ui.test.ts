@@ -238,7 +238,7 @@ await new Promise((resolve) => setTimeout(resolve, 2500));
 test("the home screen renders rather than staying on the loader", () => {
   const text = app.textContent;
   assert.ok(!text.includes("Opening the encyclopaedia"), "stuck on the loading state");
-  assert.ok(app.find("cover").length === 1, "no cover on the home screen");
+  assert.ok(app.find("logo").length === 1, "no title block on the home screen");
   assert.ok(/3,9\d\d articles/.test(text), `entry count missing from: ${text.slice(0, 120)}`);
 });
 
@@ -508,16 +508,24 @@ test("a stored preference is restored, and a broken one does not break the page"
 
 /* ---------- cover, appearance, history ---------- */
 
-test("the app opens on the book's own title page", () => {
+test("the app opens on a drawn title block, not an image", () => {
   // Earlier tests navigated away; return to the opening screen.
   while (!backButton.hidden) backButton.click();
-  const cover = app.find("cover")[0];
-  assert.ok(cover, "no cover on the home screen");
-  const image = cover.all().find((n) => n.tagName === "img");
-  assert.ok(image, "the cover has no image");
-  assert.match(image!.getAttribute("src") ?? "", /title-page\.png$/);
-  assert.match(image!.getAttribute("alt") ?? "", /Mackey/,
-    "the cover image has no useful alternative text");
+  const logo = app.find("logo")[0];
+  assert.ok(logo, "no title block on the home screen");
+
+  const text = logo.textContent;
+  assert.match(text, /Freemasonry/, "the display line is missing");
+  assert.match(text, /Mackey/, "the author is missing");
+  assert.match(text, /3,9\d\d articles/, "the entry count is missing");
+
+  // Set in type, so it scales and follows the theme; nothing to download.
+  assert.equal(logo.all().filter((n) => n.tagName === "img").length, 0,
+    "the title block should be drawn, not an image");
+  const mark = logo.all().find((n) => n.className.includes("logo-mark"));
+  assert.ok(mark, "no mark");
+  assert.equal(mark!.getAttribute("aria-hidden"), "true",
+    "the mark repeats the words beside it and should not be read out twice");
 });
 
 test("appearance offers auto, light and dark", () => {
