@@ -14,19 +14,26 @@ const KEY = "am-reading";
 
 export type Size = "s" | "m" | "l" | "xl";
 
+export type Theme = "system" | "light" | "dark";
+
 export type Preferences = {
   size: Size;
   reading: boolean;
+  theme: Theme;
 };
 
 const SIZES: Size[] = ["s", "m", "l", "xl"];
+const THEMES: Theme[] = ["system", "light", "dark"];
+const THEME_NAME: Record<Theme, string> = {
+  system: "Auto", light: "Light", dark: "Dark",
+};
 const SIZE_LABEL: Record<Size, string> = { s: "A", m: "A", l: "A", xl: "A" };
 const SIZE_NAME: Record<Size, string> = {
   s: "Small", m: "Default", l: "Large", xl: "Largest",
 };
 
 export function load(): Preferences {
-  const fallback: Preferences = { size: "m", reading: false };
+  const fallback: Preferences = { size: "m", reading: false, theme: "system" };
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return fallback;
@@ -34,6 +41,7 @@ export function load(): Preferences {
     return {
       size: SIZES.includes(parsed.size as Size) ? (parsed.size as Size) : "m",
       reading: parsed.reading === true,
+      theme: THEMES.includes(parsed.theme as Theme) ? (parsed.theme as Theme) : "system",
     };
   } catch {
     return fallback;
@@ -53,6 +61,8 @@ export function apply(preferences: Preferences): void {
   for (const size of SIZES) classes.remove(`size-${size}`);
   classes.add(`size-${preferences.size}`);
   classes.toggle("reading", preferences.reading);
+  classes.remove("theme-light", "theme-dark");
+  if (preferences.theme !== "system") classes.add(`theme-${preferences.theme}`);
 }
 
 /**
@@ -128,7 +138,38 @@ export function buildPanel(
   group.append(inner);
   modeRow.append(modeLabel, group);
 
-  wrap.append(sizeRow, modeRow);
+  // Appearance
+  const themeRow = document.createElement("div");
+  themeRow.className = "option-row";
+  const themeLabel = document.createElement("span");
+  themeLabel.textContent = "Appearance";
+  const themeSteps = document.createElement("div");
+  themeSteps.className = "steps";
+  themeSteps.setAttribute("role", "group");
+  themeSteps.setAttribute("aria-label", "Appearance");
+
+  const themeButtons = new Map<Theme, HTMLButtonElement>();
+  for (const theme of THEMES) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = THEME_NAME[theme];
+    button.setAttribute("aria-label", THEME_NAME[theme]);
+    button.setAttribute("aria-pressed", String(preferences.theme === theme));
+    button.addEventListener("click", () => {
+      preferences.theme = theme;
+      for (const [key, other] of themeButtons) {
+        other.setAttribute("aria-pressed", String(key === theme));
+      }
+      apply(preferences);
+      save(preferences);
+      onChange(preferences);
+    });
+    themeButtons.set(theme, button);
+    themeSteps.append(button);
+  }
+  themeRow.append(themeLabel, themeSteps);
+
+  wrap.append(themeRow, sizeRow, modeRow);
   panel.append(wrap);
   return panel;
 }

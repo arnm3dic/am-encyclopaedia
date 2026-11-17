@@ -13,6 +13,8 @@
 import { loadDictionary } from "../core/data/load.ts";
 import { stripMarkers } from "../core/normalise.ts";
 import * as reading from "./reading.ts";
+// Named `recents` because `history` is already the navigation stack here.
+import * as recents from "./history.ts";
 import type { Dictionary, Result, Meta } from "../core/search/engine.ts";
 import { Band, BAND_LABEL } from "../core/search/engine.ts";
 
@@ -85,13 +87,49 @@ function render(): void {
 
 function renderHome(): HTMLElement {
   const wrap = element("div", { class: "wrap" });
-  const hero = element("section", { class: "hero" });
-  hero.append(
-    element("h1", {}, "Mackey's Encyclopaedia of Freemasonry"),
-    element("p", {}, `${dictionary!.size.toLocaleString()} articles from the revised edition of 1912, searchable offline.`),
-  );
-  wrap.append(hero, renderAlphabet());
+
+  // The book opens on its own title page rather than on anything invented.
+  const cover = element("section", { class: "cover" });
+  const figure = element("figure");
+  const image = element("img", {
+    src: new URL("../img/title-page.png", import.meta.url).href,
+    alt: "Title page: An Encyclopaedia of Freemasonry and Its Kindred Sciences, "
+       + "by Albert G. Mackey, new and revised edition, 1914",
+    width: "760",
+    height: "1277",
+  });
+  figure.append(image, element("figcaption", {},
+    `${dictionary!.size.toLocaleString()} articles, searchable offline`));
+  cover.append(figure);
+  wrap.append(cover);
+
+  const recent = renderRecent();
+  if (recent) wrap.append(recent);
+  wrap.append(renderAlphabet());
   return wrap;
+}
+
+function renderRecent(): HTMLElement | null {
+  const visits = recents.load().filter((visit) => dictionary!.entry(visit.id));
+  if (visits.length === 0) return null;
+
+  const section = element("section", { class: "recent" });
+  section.append(element("h2", { class: "sans" }, "Recently viewed"));
+  for (const visit of visits.slice(0, 8)) {
+    const button = element("button", { class: "recent-item", type: "button" });
+    button.append(document.createTextNode(visit.headword));
+    button.append(element("em", {}, recents.when(visit.at)));
+    button.addEventListener("click", () => go({ name: "entry", id: visit.id, query: "" }));
+    section.append(button);
+  }
+  const clear = element("button", { class: "recent-clear", type: "button" },
+    "Clear history");
+  clear.addEventListener("click", () => {
+    recents.clear();
+    render();
+  });
+  section.append(clear);
+  return section;
 }
 
 function renderAlphabet(): HTMLElement {
@@ -356,6 +394,7 @@ function resultRow(result: Result, query: string): HTMLElement {
 
 function renderEntry(id: number, query: string): HTMLElement {
   const entry = dictionary!.entry(id);
+  if (entry) recents.record(id, entry.headword);
   const wrap = element("div", { class: "wrap" });
   if (!entry) {
     wrap.append(element("p", { class: "empty" }, "That entry could not be found."));
@@ -441,7 +480,11 @@ function buildReadingOptions(): void {
 
 /* ---------- text ---------- */
 
+const ITALIC_OPEN = "\u0002";
+const ITALIC_CLOSE = "\u0003";
+
 function splitParagraphs(body: string): string[] {
+  carriedItalic = false;
   // Mackey's articles arrive as one run of text. Long ones are easier to read
   // broken at sentence boundaries near a comfortable length.
   if (body.length < 700) return [body];
@@ -456,7 +499,30 @@ function splitParagraphs(body: string): string[] {
     }
   }
   if (current) paragraphs.push(current);
-  return paragraphs;
+  return paragraphs.map(balanceMarkers);
+}
+
+/**
+ * Keep each paragraph's italic markers balanced.
+ *
+ * A long entry is broken into paragraphs at sentence boundaries, and a run of
+ * italics can span one of those breaks. Left alone the first paragraph never
+ * closes and the second never opens, so the italics simply vanish from the
+ * rest of the entry.
+ */
+let carriedItalic = false;
+
+function balanceMarkers(paragraph: string): string {
+  let text = paragraph;
+  if (carriedItalic) text = ITALIC_OPEN + text;
+  let open = carriedItalic;
+  for (const character of paragraph) {
+    if (character === ITALIC_OPEN) open = true;
+    else if (character === ITALIC_CLOSE) open = false;
+  }
+  carriedItalic = open;
+  if (open) text += ITALIC_CLOSE;
+  return text;
 }
 
 /**
@@ -513,32 +579,6 @@ function fillWithHighlights(host: HTMLElement, text: string, query: string): voi
     from = at + needle.length;
   }
   if (from < text.length) host.append(text.slice(from));
-}
-
-function highlightUnused(text: string, query: string): HTMLElement {
-  const paragraph = element("p");
-  const needle = query.trim().toLowerCase();
-  if (!needle || needle.length < 2) {
-    paragraph.textContent = text;
-    return paragraph;
-  }
-  const haystack = text.toLowerCase();
-  let from = 0;
-  let found = false;
-  for (;;) {
-    const at = haystack.indexOf(needle, from);
-    if (at === -1) break;
-    found = true;
-    if (at > from) paragraph.append(text.slice(from, at));
-    paragraph.append(element("mark", {}, text.slice(at, at + needle.length)));
-    from = at + needle.length;
-  }
-  if (!found) {
-    paragraph.textContent = text;
-    return paragraph;
-  }
-  if (from < text.length) paragraph.append(text.slice(from));
-  return paragraph;
 }
 
 /* ---------- helpers ---------- */

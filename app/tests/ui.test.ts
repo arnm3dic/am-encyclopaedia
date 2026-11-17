@@ -191,6 +191,11 @@ Object.defineProperty(globalThis, "localStorage", {
 const documentStub = {
   body: bodyNode,
   createElement: (tag: string) => new StubNode(tag),
+  createTextNode: (text: string) => {
+    const node = new StubNode("#text");
+    node.textContent = text;
+    return node;
+  },
   getElementById: (id: string) => nodesById[id] ?? new StubNode("div"),
   get activeElement() {
     return activeElement;
@@ -233,7 +238,7 @@ await new Promise((resolve) => setTimeout(resolve, 2500));
 test("the home screen renders rather than staying on the loader", () => {
   const text = app.textContent;
   assert.ok(!text.includes("Opening the encyclopaedia"), "stuck on the loading state");
-  assert.ok(text.includes("Mackey"), "no title on the home screen");
+  assert.ok(app.find("cover").length === 1, "no cover on the home screen");
   assert.ok(/3,9\d\d articles/.test(text), `entry count missing from: ${text.slice(0, 120)}`);
 });
 
@@ -490,13 +495,108 @@ test("reading mode toggles on and off", () => {
 
 test("a stored preference is restored, and a broken one does not break the page", async () => {
   const module = await import("../src/ui/reading.ts");
-  store.set("am-reading", JSON.stringify({ size: "xl", reading: true }));
-  assert.deepEqual(module.load(), { size: "xl", reading: true });
+  store.set("am-reading", JSON.stringify({ size: "xl", reading: true, theme: "dark" }));
+  assert.deepEqual(module.load(), { size: "xl", reading: true, theme: "dark" });
 
   store.set("am-reading", "not json at all");
-  assert.deepEqual(module.load(), { size: "m", reading: false },
+  assert.deepEqual(module.load(), { size: "m", reading: false, theme: "system" },
     "a corrupt preference should fall back, not throw");
 
   store.set("am-reading", JSON.stringify({ size: "enormous" }));
   assert.equal(module.load().size, "m", "an unknown size should fall back");
+});
+
+/* ---------- cover, appearance, history ---------- */
+
+test("the app opens on the book's own title page", () => {
+  // Earlier tests navigated away; return to the opening screen.
+  while (!backButton.hidden) backButton.click();
+  const cover = app.find("cover")[0];
+  assert.ok(cover, "no cover on the home screen");
+  const image = cover.all().find((n) => n.tagName === "img");
+  assert.ok(image, "the cover has no image");
+  assert.match(image!.getAttribute("src") ?? "", /title-page\.png$/);
+  assert.match(image!.getAttribute("alt") ?? "", /Mackey/,
+    "the cover image has no useful alternative text");
+});
+
+test("appearance offers auto, light and dark", () => {
+  const names = optionButtons()
+    .map((b) => b.getAttribute("aria-label"))
+    .filter((n) => n === "Auto" || n === "Light" || n === "Dark");
+  assert.deepEqual(names, ["Auto", "Light", "Dark"]);
+});
+
+test("choosing dark applies it, and auto clears both", () => {
+  optionButtons().find((b) => b.getAttribute("aria-label") === "Dark")!.click();
+  assert.ok(bodyNode.classList.contains("theme-dark"), "dark not applied");
+  assert.ok(!bodyNode.classList.contains("theme-light"), "both themes at once");
+
+  optionButtons().find((b) => b.getAttribute("aria-label") === "Light")!.click();
+  assert.ok(bodyNode.classList.contains("theme-light"), "light not applied");
+  assert.ok(!bodyNode.classList.contains("theme-dark"), "dark not cleared");
+
+  optionButtons().find((b) => b.getAttribute("aria-label") === "Auto")!.click();
+  assert.ok(!bodyNode.classList.contains("theme-dark"));
+  assert.ok(!bodyNode.classList.contains("theme-light"));
+});
+
+test("an unknown stored theme falls back to following the system", async () => {
+  const module = await import("../src/ui/reading.ts");
+  store.set("am-reading", JSON.stringify({ theme: "sepia" }));
+  assert.equal(module.load().theme, "system");
+});
+
+test("opening an entry records it and the home screen lists it", async () => {
+  const module = await import("../src/ui/history.ts");
+  module.clear();
+
+  const box = searchInput();
+  box.value = "";
+  box.typeInto("acacia");
+  suggestionButtons()[0].click();
+
+  const visits = module.load();
+  assert.equal(visits.length, 1, `expected one visit, got ${visits.length}`);
+  assert.match(visits[0].headword, /Acacia/);
+
+  while (!backButton.hidden) backButton.click();
+  const recent = app.find("recent")[0];
+  assert.ok(recent, "no recently viewed section after visiting an entry");
+  assert.match(recent.textContent, /Acacia/);
+});
+
+test("revisiting moves an entry up rather than duplicating it", async () => {
+  const module = await import("../src/ui/history.ts");
+  module.clear();
+  module.record(1, "First.");
+  module.record(2, "Second.");
+  module.record(1, "First.");
+  const visits = module.load();
+  assert.equal(visits.length, 2, "a revisit duplicated the entry");
+  assert.equal(visits[0].headword, "First.", "the revisit did not move to the front");
+});
+
+test("a corrupt history does not break the page", async () => {
+  const module = await import("../src/ui/history.ts");
+  store.set("am-history", "{{ not json");
+  assert.deepEqual(module.load(), []);
+  store.set("am-history", JSON.stringify([{ nonsense: true }, { id: 5, headword: "Ok." }]));
+  assert.deepEqual(module.load().map((v) => v.id), [5], "malformed rows should be dropped");
+});
+
+test("history is capped so it cannot grow without bound", async () => {
+  const module = await import("../src/ui/history.ts");
+  module.clear();
+  for (let i = 0; i < 60; i++) module.record(i, `Entry ${i}.`);
+  assert.ok(module.load().length <= 40, `history grew to ${module.load().length}`);
+});
+
+test("relative times read naturally", async () => {
+  const module = await import("../src/ui/history.ts");
+  const now = Date.UTC(2026, 0, 2, 12, 0, 0);
+  assert.equal(module.when(now - 10_000, now), "just now");
+  assert.equal(module.when(now - 60_000, now), "1 minute ago");
+  assert.equal(module.when(now - 3_600_000, now), "1 hour ago");
+  assert.equal(module.when(now - 86_400_000 * 3, now), "3 days ago");
 });

@@ -157,7 +157,7 @@ def build(entries_path: Path, out_path: Path) -> dict:
     meta = {
         "source_title": "An Encyclopaedia of Freemasonry and Its Kindred Sciences",
         "source_author": "Albert G. Mackey",
-        "source_edition": "Revised edition (Hawkins and Hughan), 1912",
+        "source_edition": "New and revised edition, prepared by William J. Hughan and Edward L. Hawkins; The Masonic History Company, 1914 (latest copyright 1912)",
         "source_pages": "946",
         "entries": str(len(rows)),
         "extraction_mean_confidence": str(source_summary.get("mean_confidence", "")),

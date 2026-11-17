@@ -64,9 +64,12 @@ async function main() {
       copied += 1;
     }
   }
-  const data = join(APP, "public", "data");
-  if (existsSync(data)) {
-    await cp(data, join(DIST, "data"), { recursive: true });
+  // Everything under public/ ships as-is: the data bundle and the cover image.
+  const publicDir = join(APP, "public");
+  if (existsSync(publicDir)) {
+    for (const entry of await readdir(publicDir, { withFileTypes: true })) {
+      await cp(join(publicDir, entry.name), join(DIST, entry.name), { recursive: true });
+    }
   }
 
   console.log(`built ${compiled} modules, copied ${copied} files -> ${relative(process.cwd(), DIST)}`);

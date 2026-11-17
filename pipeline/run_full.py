@@ -155,6 +155,68 @@ def interpolate_folios(records: list[dict]) -> int:
     return filled
 
 
+def merge_false_splits(entries: list) -> int:
+    """Rejoin articles that a phantom headword cut in two.
+
+    A bold fragment mid-article -- "It.", "In the.", "I. WILL." -- opens what
+    looks like a new entry, and everything after it is attributed to that
+    fragment instead of to the article it belongs to. On page 498 one such
+    fragment held 14,262 characters of the article on the Name of God.
+
+    The marks of a false split are that the headword repeats one seen earlier
+    and that it breaks alphabetical order. Those are merged back into the
+    entry above, text and all, since the headword itself was only ever part of
+    a sentence.
+    """
+    from pipeline.parse.normalise import sort_key
+
+    merged = 0
+    keep: list = []
+    seen: set[str] = set()
+    previous_key = ""
+    for entry in entries:
+        key = sort_key(entry.headword)
+        repeat = key in seen
+        out_of_order = bool(previous_key) and key < previous_key
+        if repeat and out_of_order and keep:
+            host = keep[-1]
+            tail = f"{entry.headword} {entry.body}".strip()
+            host.body = f"{host.body} {tail}".strip()
+            if "merged_false_split" not in host.issues:
+                host.issues.append("merged_false_split")
+            merged += 1
+            continue
+        keep.append(entry)
+        seen.add(key)
+        previous_key = key
+    entries[:] = keep
+    return merged
+
+
+def drop_false_headwords(entries: list) -> list:
+    """Remove entries that have no definition and sit out of alphabetical order.
+
+    A dictionary entry with no text is of no use to a reader, and one that also
+    breaks the ordering is a bold word mistaken for a headword rather than an
+    article whose body went astray -- "Bn.", "Ha.", "In the." Entries with an
+    empty body that are correctly ordered are kept and flagged, since those are
+    real headwords whose text needs recovering.
+    """
+    from pipeline.parse.normalise import sort_key
+
+    keep: list = []
+    previous_key = ""
+    for entry in entries:
+        empty = not entry.body.strip()
+        key = sort_key(entry.headword)
+        out_of_order = bool(previous_key) and key < previous_key
+        if empty and out_of_order:
+            continue
+        keep.append(entry)
+        previous_key = key
+    return keep
+
+
 def aggregate(out_dir: Path, correct: bool = True) -> dict:
     words_dir = out_dir / "words"
     records = [parse_one(p) for p in sorted(words_dir.glob("p*.json"))]
@@ -226,6 +288,14 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
             json.dumps([f.as_dict() for f in body_plan], indent=2, ensure_ascii=False),
             encoding="utf-8")
 
+    dropped = 0
+    merged = 0
+    if correct:
+        before = len(entries)
+        entries = drop_false_headwords(entries)
+        dropped = before - len(entries)
+        merged = merge_false_splits(entries)
+
     issues = checks.check(entries)
     summary = checks.summarise(entries, issues)
 
@@ -246,6 +316,8 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
 
     summary.update({
         "candidates_promoted": promoted,
+        "false_headwords_dropped": dropped,
+        "false_splits_merged": merged,
         "body_text_fixes": body_count,
         "body_text_token_types": len(body_plan),
         "candidates_considered": len(decisions),

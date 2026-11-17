@@ -96,7 +96,14 @@ def _clean(target: str) -> str:
 
 
 def extract(body: str) -> list[CrossRef]:
-    """Cross-references mentioned in one entry's body."""
+    """Cross-references mentioned in one entry's body.
+
+    Italic markers are stripped first. Mackey sets the target of a reference
+    in italic, so the marker lands between "See " and the name -- and the
+    patterns, which expect a capital there, stopped matching. That quietly
+    halved the resolved references when italics were introduced.
+    """
+    body = body.replace("\x02", "").replace("\x03", "")
     found: list[CrossRef] = []
     seen: set[str] = set()
 
