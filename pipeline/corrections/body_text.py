@@ -310,3 +310,26 @@ def apply_splits(entries: list[dict], fixes: list[BodyFix]) -> int:
         if body:
             entry["body"] = pattern.sub(replace, body)
     return changed
+
+
+def apply_entry_overrides(entries: list[dict], overrides: dict) -> int:
+    """Apply corrections scoped to a single entry.
+
+    Some words are only wrong in one place. "Paris" appears 216 times in this
+    book and is right in 215 of them; in the article on Arts it is a misread of
+    "Parts", because the sentence is about the phrase "arts, parts, and points"
+    and the book has a Parts entry for the cross-reference to point at. No
+    corpus-wide rule can tell those apart, so this one is scoped and verified
+    against the page image.
+    """
+    changed = 0
+    by_headword = {k: v for k, v in overrides.items() if not k.startswith("_")}
+    for entry in entries:
+        pairs = by_headword.get(entry.get("headword", ""))
+        if not pairs:
+            continue
+        for before, after in pairs:
+            if before in entry.get("body", ""):
+                entry["body"] = entry["body"].replace(before, after)
+                changed += 1
+    return changed

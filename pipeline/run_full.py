@@ -168,11 +168,14 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
     if correct:
         sequence = [raw for record in sorted(records, key=lambda r: r["pdf_page"])
                     for raw in record.get("entries", [])]
+        # Strip marginal marks before the overrides are matched: an override
+        # keys on the headword as printed, and "L. H.] Seald Miserables."
+        # does not match "Seald Miserables." until the mark is gone.
+        fixes += ocr_fixes.strip_artifacts(sequence)
         overrides_path = Path(__file__).resolve().parent / "corrections" / "overrides.json"
         if overrides_path.exists():
             overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
             fixes += ocr_fixes.apply_overrides(sequence, overrides)
-        fixes += ocr_fixes.strip_artifacts(sequence)
         decisions, promoted = triage.triage(sequence)
         fixes += ocr_fixes.repair(sequence)
 
@@ -205,6 +208,13 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
         body_plan = body_text.plan(as_dicts, attested)
         body_count = body_text.apply(
             [{"body": e.body} if False else e.__dict__ for e in entries], body_plan)
+        entry_overrides_path = (Path(__file__).resolve().parent / "corrections"
+                                / "body_overrides.json")
+        if entry_overrides_path.exists():
+            body_count += body_text.apply_entry_overrides(
+                [e.__dict__ for e in entries],
+                json.loads(entry_overrides_path.read_text(encoding="utf-8")))
+
         split_plan = body_text.plan_splits(
             [e.__dict__ for e in entries], attested)
         body_count += body_text.apply_splits([e.__dict__ for e in entries], split_plan)

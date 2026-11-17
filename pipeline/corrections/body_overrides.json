@@ -1,0 +1,7 @@
+{
+  "_comment": "Corrections to body text, scoped to one entry so a word is only changed where it is wrong. Each was verified against the page image. Keyed by headword; each pair is [as extracted, as printed].",
+
+  "Arts.": [
+    ["(See Paris, and also Points.)", "(See Parts, and also Points.)"]
+  ]
+}

@@ -510,9 +510,9 @@
     "first_letter": "D"
   },
   {
-    "input": "Druidieal Mysteries.",
-    "normalise": "druidieal mysteries",
-    "sort_key": "druidieal mysteries",
+    "input": "Druidical Mysteries.",
+    "normalise": "druidical mysteries",
+    "sort_key": "druidical mysteries",
     "first_letter": "D"
   },
   {
@@ -1278,15 +1278,15 @@
     "first_letter": "S"
   },
   {
-    "input": "Schaw Manuscript.",
-    "normalise": "schaw manuscript",
-    "sort_key": "schaw manuscript",
+    "input": "Scepter.",
+    "normalise": "scepter",
+    "sort_key": "scepter",
     "first_letter": "S"
   },
   {
-    "input": "Scriptures, Reading of the.",
-    "normalise": "scriptures reading of the",
-    "sort_key": "scriptures reading of the",
+    "input": "Scriptures, Belief in the.",
+    "normalise": "scriptures belief in the",
+    "sort_key": "scriptures belief in the",
     "first_letter": "S"
   },
   {
@@ -1446,63 +1446,63 @@
     "first_letter": "U"
   },
   {
-    "input": "Veils, Symbolism of the.",
-    "normalise": "veils symbolism of the",
-    "sort_key": "veils symbolism of the",
+    "input": "Veils, Grand Masters of the.",
+    "normalise": "veils grand masters of the",
+    "sort_key": "veils grand masters of the",
     "first_letter": "V"
   },
   {
-    "input": "Vivat.",
-    "normalise": "vivat",
-    "sort_key": "vivat",
+    "input": "Vitra.",
+    "normalise": "vitra",
+    "sort_key": "vitra",
     "first_letter": "V"
   },
   {
-    "input": "Wands.",
-    "normalise": "wands",
-    "sort_key": "wands",
+    "input": "Wallachia, Grand Scottish Degree of.",
+    "normalise": "wallachia grand scottish degree of",
+    "sort_key": "wallachia grand scottish degree of",
     "first_letter": "W"
   },
   {
-    "input": "Welcome.",
-    "normalise": "welcome",
-    "sort_key": "welcome",
+    "input": "Weishaupt, Adam.",
+    "normalise": "weishaupt adam",
+    "sort_key": "weishaupt adam",
     "first_letter": "W"
   },
   {
-    "input": "Will.",
-    "normalise": "will",
-    "sort_key": "will",
+    "input": "Wik.",
+    "normalise": "wik",
+    "sort_key": "wik",
     "first_letter": "W"
   },
   {
-    "input": "Word, Lost.",
-    "normalise": "word lost",
-    "sort_key": "word lost",
+    "input": "Word.",
+    "normalise": "word",
+    "sort_key": "word",
     "first_letter": "W"
   },
   {
-    "input": "Wykeham, William of.",
-    "normalise": "wykeham william of",
-    "sort_key": "wykeham william of",
+    "input": "Wrestle.",
+    "normalise": "wrestle",
+    "sort_key": "wrestle",
     "first_letter": "W"
   },
   {
-    "input": "Yes, I have.",
-    "normalise": "yes i have",
-    "sort_key": "yes i have",
+    "input": "Yellow Jacket.",
+    "normalise": "yellow jacket",
+    "sort_key": "yellow jacket",
     "first_letter": "Y"
   },
   {
-    "input": "Zadok.",
-    "normalise": "zadok",
-    "sort_key": "zadok",
+    "input": "Zadki-el..",
+    "normalise": "zadki-el",
+    "sort_key": "zadki el",
     "first_letter": "Z"
   },
   {
-    "input": "Zicu or Ziggara.",
-    "normalise": "zicu or ziggara",
-    "sort_key": "zicu or ziggara",
+    "input": "Zi.",
+    "normalise": "zi",
+    "sort_key": "zi",
     "first_letter": "Z"
   }
 ]
