@@ -22,3 +22,6 @@ build/
 
 # The source scan is not committed - 56 MB, and not ours to redistribute here
 *.pdf
+
+# Exported web data: regenerable from dictionary.db
+app/public/data/

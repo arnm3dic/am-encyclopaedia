@@ -1,0 +1,1508 @@
+[
+  {
+    "input": "Babylon, Red Cross of.",
+    "normalise": "babylon red cross of",
+    "sort_key": "babylon red cross of",
+    "first_letter": "B"
+  },
+  {
+    "input": "Maçon",
+    "normalise": "macon",
+    "sort_key": "macon",
+    "first_letter": "M"
+  },
+  {
+    "input": "Rose-Croix",
+    "normalise": "rose-croix",
+    "sort_key": "rose croix",
+    "first_letter": "R"
+  },
+  {
+    "input": "Mason's Word",
+    "normalise": "mason's word",
+    "sort_key": "mason s word",
+    "first_letter": "M"
+  },
+  {
+    "input": "Ægypt",
+    "normalise": "aegypt",
+    "sort_key": "aegypt",
+    "first_letter": "A"
+  },
+  {
+    "input": "Thébäische",
+    "normalise": "thebaische",
+    "sort_key": "thebaische",
+    "first_letter": "T"
+  },
+  {
+    "input": "33°",
+    "normalise": "33",
+    "sort_key": "33",
+    "first_letter": "#"
+  },
+  {
+    "input": "Knight Kadosh.",
+    "normalise": "knight kadosh",
+    "sort_key": "knight kadosh",
+    "first_letter": "K"
+  },
+  {
+    "input": "  spaced   out  ",
+    "normalise": "spaced out",
+    "sort_key": "spaced out",
+    "first_letter": "S"
+  },
+  {
+    "input": "",
+    "normalise": "",
+    "sort_key": "",
+    "first_letter": "#"
+  },
+  {
+    "input": "St. John's Day.",
+    "normalise": "st john's day",
+    "sort_key": "st john s day",
+    "first_letter": "S"
+  },
+  {
+    "input": "Zschokke, J. H. D.",
+    "normalise": "zschokke j h d",
+    "sort_key": "zschokke j h d",
+    "first_letter": "Z"
+  },
+  {
+    "input": "Maçonnerie d'Adoption",
+    "normalise": "maconnerie d'adoption",
+    "sort_key": "maconnerie d adoption",
+    "first_letter": "M"
+  },
+  {
+    "input": "Schröder, Friedrich Ludwig",
+    "normalise": "schroder friedrich ludwig",
+    "sort_key": "schroder friedrich ludwig",
+    "first_letter": "S"
+  },
+  {
+    "input": "Tetragrammaton",
+    "normalise": "tetragrammaton",
+    "sort_key": "tetragrammaton",
+    "first_letter": "T"
+  },
+  {
+    "input": "A.'. L.'.",
+    "normalise": "a l",
+    "sort_key": "a l",
+    "first_letter": "A"
+  },
+  {
+    "input": "Beaucéant",
+    "normalise": "beauceant",
+    "sort_key": "beauceant",
+    "first_letter": "B"
+  },
+  {
+    "input": "Ne Plus Ultra",
+    "normalise": "ne plus ultra",
+    "sort_key": "ne plus ultra",
+    "first_letter": "N"
+  },
+  {
+    "input": "A. Anderson Manuscript.",
+    "normalise": "a anderson manuscript",
+    "sort_key": "a anderson manuscript",
+    "first_letter": "A"
+  },
+  {
+    "input": "Abbreviations.",
+    "normalise": "abbreviations",
+    "sort_key": "abbreviations",
+    "first_letter": "A"
+  },
+  {
+    "input": "Abraham.",
+    "normalise": "abraham",
+    "sort_key": "abraham",
+    "first_letter": "A"
+  },
+  {
+    "input": "Accepted.",
+    "normalise": "accepted",
+    "sort_key": "accepted",
+    "first_letter": "A"
+  },
+  {
+    "input": "Actual Past Masters.",
+    "normalise": "actual past masters",
+    "sort_key": "actual past masters",
+    "first_letter": "A"
+  },
+  {
+    "input": "Adonai.",
+    "normalise": "adonai",
+    "sort_key": "adonai",
+    "first_letter": "A"
+  },
+  {
+    "input": "Africa.",
+    "normalise": "africa",
+    "sort_key": "africa",
+    "first_letter": "A"
+  },
+  {
+    "input": "Ahiah.",
+    "normalise": "ahiah",
+    "sort_key": "ahiah",
+    "first_letter": "A"
+  },
+  {
+    "input": "Alexander I., Emperor of Russia.",
+    "normalise": "alexander i emperor of russia",
+    "sort_key": "alexander i emperor of russia",
+    "first_letter": "A"
+  },
+  {
+    "input": "Almsgliving.",
+    "normalise": "almsgliving",
+    "sort_key": "almsgliving",
+    "first_letter": "A"
+  },
+  {
+    "input": "Amen.",
+    "normalise": "amen",
+    "sort_key": "amen",
+    "first_letter": "A"
+  },
+  {
+    "input": "Amun.",
+    "normalise": "amun",
+    "sort_key": "amun",
+    "first_letter": "A"
+  },
+  {
+    "input": "Andrew, Cross of St. See Cross, St. Andrew’s.",
+    "normalise": "andrew cross of st see cross st andrew's",
+    "sort_key": "andrew cross of st see cross st andrew s",
+    "first_letter": "A"
+  },
+  {
+    "input": "Anno Hebraico.",
+    "normalise": "anno hebraico",
+    "sort_key": "anno hebraico",
+    "first_letter": "A"
+  },
+  {
+    "input": "Antiquity, Lodge of.",
+    "normalise": "antiquity lodge of",
+    "sort_key": "antiquity lodge of",
+    "first_letter": "A"
+  },
+  {
+    "input": "Apprentice Cohen.",
+    "normalise": "apprentice cohen",
+    "sort_key": "apprentice cohen",
+    "first_letter": "A"
+  },
+  {
+    "input": "Apron.",
+    "normalise": "apron",
+    "sort_key": "apron",
+    "first_letter": "A"
+  },
+  {
+    "input": "Archimagus.",
+    "normalise": "archimagus",
+    "sort_key": "archimagus",
+    "first_letter": "A"
+  },
+  {
+    "input": "Ardarel.",
+    "normalise": "ardarel",
+    "sort_key": "ardarel",
+    "first_letter": "A"
+  },
+  {
+    "input": "Arkite Worship.",
+    "normalise": "arkite worship",
+    "sort_key": "arkite worship",
+    "first_letter": "A"
+  },
+  {
+    "input": "Ascension Day.",
+    "normalise": "ascension day",
+    "sort_key": "ascension day",
+    "first_letter": "A"
+  },
+  {
+    "input": "Astrology.",
+    "normalise": "astrology",
+    "sort_key": "astrology",
+    "first_letter": "A"
+  },
+  {
+    "input": "Augustine, Si.",
+    "normalise": "augustine si",
+    "sort_key": "augustine si",
+    "first_letter": "A"
+  },
+  {
+    "input": "Award.",
+    "normalise": "award",
+    "sort_key": "award",
+    "first_letter": "A"
+  },
+  {
+    "input": "Baden.",
+    "normalise": "baden",
+    "sort_key": "baden",
+    "first_letter": "B"
+  },
+  {
+    "input": "Ballot, Secrecy of the.",
+    "normalise": "ballot secrecy of the",
+    "sort_key": "ballot secrecy of the",
+    "first_letter": "B"
+  },
+  {
+    "input": "Bartolozzi, Francesco (1728-1813).",
+    "normalise": "bartolozzi francesco 1728-1813",
+    "sort_key": "bartolozzi francesco 1728 1813",
+    "first_letter": "B"
+  },
+  {
+    "input": "Beauty and Bands.",
+    "normalise": "beauty and bands",
+    "sort_key": "beauty and bands",
+    "first_letter": "B"
+  },
+  {
+    "input": "Benediction.",
+    "normalise": "benediction",
+    "sort_key": "benediction",
+    "first_letter": "B"
+  },
+  {
+    "input": "Bezaleel.",
+    "normalise": "bezaleel",
+    "sort_key": "bezaleel",
+    "first_letter": "B"
+  },
+  {
+    "input": "Blindness.",
+    "normalise": "blindness",
+    "sort_key": "blindness",
+    "first_letter": "B"
+  },
+  {
+    "input": "Bohemann, Kari Adolf Anderson.",
+    "normalise": "bohemann kari adolf anderson",
+    "sort_key": "bohemann kari adolf anderson",
+    "first_letter": "B"
+  },
+  {
+    "input": "Books, Anti-Masonic.",
+    "normalise": "books anti-masonic",
+    "sort_key": "books anti masonic",
+    "first_letter": "B"
+  },
+  {
+    "input": "Brazen Serpent, Knight of the.",
+    "normalise": "brazen serpent knight of the",
+    "sort_key": "brazen serpent knight of the",
+    "first_letter": "B"
+  },
+  {
+    "input": "British Columbia.",
+    "normalise": "british columbia",
+    "sort_key": "british columbia",
+    "first_letter": "B"
+  },
+  {
+    "input": "Buenos Ayres.",
+    "normalise": "buenos ayres",
+    "sort_key": "buenos ayres",
+    "first_letter": "B"
+  },
+  {
+    "input": "Business.",
+    "normalise": "business",
+    "sort_key": "business",
+    "first_letter": "B"
+  },
+  {
+    "input": "Calendar.",
+    "normalise": "calendar",
+    "sort_key": "calendar",
+    "first_letter": "C"
+  },
+  {
+    "input": "Capitular Masonry.",
+    "normalise": "capitular masonry",
+    "sort_key": "capitular masonry",
+    "first_letter": "C"
+  },
+  {
+    "input": "Carthusians.",
+    "normalise": "carthusians",
+    "sort_key": "carthusians",
+    "first_letter": "C"
+  },
+  {
+    "input": "Celts.",
+    "normalise": "celts",
+    "sort_key": "celts",
+    "first_letter": "C"
+  },
+  {
+    "input": "Chaillou de Joinville.",
+    "normalise": "chaillou de joinville",
+    "sort_key": "chaillou de joinville",
+    "first_letter": "C"
+  },
+  {
+    "input": "Chaneellor, Grand.",
+    "normalise": "chaneellor grand",
+    "sort_key": "chaneellor grand",
+    "first_letter": "C"
+  },
+  {
+    "input": "Characteristic Name.",
+    "normalise": "characteristic name",
+    "sort_key": "characteristic name",
+    "first_letter": "C"
+  },
+  {
+    "input": "Charter.",
+    "normalise": "charter",
+    "sort_key": "charter",
+    "first_letter": "C"
+  },
+  {
+    "input": "Chief of the Twelve Tribes.",
+    "normalise": "chief of the twelve tribes",
+    "sort_key": "chief of the twelve tribes",
+    "first_letter": "C"
+  },
+  {
+    "input": "Cireles (Kranzchen).",
+    "normalise": "cireles kranzchen",
+    "sort_key": "cireles kranzchen",
+    "first_letter": "C"
+  },
+  {
+    "input": "Clermont, Chapter of.",
+    "normalise": "clermont chapter of",
+    "sort_key": "clermont chapter of",
+    "first_letter": "C"
+  },
+  {
+    "input": "Cohens, Elected.",
+    "normalise": "cohens elected",
+    "sort_key": "cohens elected",
+    "first_letter": "C"
+  },
+  {
+    "input": "Combination of Masons.",
+    "normalise": "combination of masons",
+    "sort_key": "combination of masons",
+    "first_letter": "C"
+  },
+  {
+    "input": "Communication, Quarterly.",
+    "normalise": "communication quarterly",
+    "sort_key": "communication quarterly",
+    "first_letter": "C"
+  },
+  {
+    "input": "Consecration.",
+    "normalise": "consecration",
+    "sort_key": "consecration",
+    "first_letter": "C"
+  },
+  {
+    "input": "Convention.",
+    "normalise": "convention",
+    "sort_key": "convention",
+    "first_letter": "C"
+  },
+  {
+    "input": "Coronet, Ducal.",
+    "normalise": "coronet ducal",
+    "sort_key": "coronet ducal",
+    "first_letter": "C"
+  },
+  {
+    "input": "Coustos, John.",
+    "normalise": "coustos john",
+    "sort_key": "coustos john",
+    "first_letter": "C"
+  },
+  {
+    "input": "Crimson.",
+    "normalise": "crimson",
+    "sort_key": "crimson",
+    "first_letter": "C"
+  },
+  {
+    "input": "Cross, Thrice Olustrious Order of the.",
+    "normalise": "cross thrice olustrious order of the",
+    "sort_key": "cross thrice olustrious order of the",
+    "first_letter": "C"
+  },
+  {
+    "input": "Cryptic Degrees.",
+    "normalise": "cryptic degrees",
+    "sort_key": "cryptic degrees",
+    "first_letter": "C"
+  },
+  {
+    "input": "Daduchos.",
+    "normalise": "daduchos",
+    "sort_key": "daduchos",
+    "first_letter": "D"
+  },
+  {
+    "input": "Dao.",
+    "normalise": "dao",
+    "sort_key": "dao",
+    "first_letter": "D"
+  },
+  {
+    "input": "Deaf and Dumb.",
+    "normalise": "deaf and dumb",
+    "sort_key": "deaf and dumb",
+    "first_letter": "D"
+  },
+  {
+    "input": "Degree.",
+    "normalise": "degree",
+    "sort_key": "degree",
+    "first_letter": "D"
+  },
+  {
+    "input": "Delaware.",
+    "normalise": "delaware",
+    "sort_key": "delaware",
+    "first_letter": "D"
+  },
+  {
+    "input": "Des Etangs, Nicholas Charles.",
+    "normalise": "des etangs nicholas charles",
+    "sort_key": "des etangs nicholas charles",
+    "first_letter": "D"
+  },
+  {
+    "input": "Dieu le Veut.",
+    "normalise": "dieu le veut",
+    "sort_key": "dieu le veut",
+    "first_letter": "D"
+  },
+  {
+    "input": "Dispensation.",
+    "normalise": "dispensation",
+    "sort_key": "dispensation",
+    "first_letter": "D"
+  },
+  {
+    "input": "Dominican Republic.",
+    "normalise": "dominican republic",
+    "sort_key": "dominican republic",
+    "first_letter": "D"
+  },
+  {
+    "input": "Dramatic Literature of Masonry.",
+    "normalise": "dramatic literature of masonry",
+    "sort_key": "dramatic literature of masonry",
+    "first_letter": "D"
+  },
+  {
+    "input": "Dummy.",
+    "normalise": "dummy",
+    "sort_key": "dummy",
+    "first_letter": "D"
+  },
+  {
+    "input": "Ear, The Listening.",
+    "normalise": "ear the listening",
+    "sort_key": "ear the listening",
+    "first_letter": "E"
+  },
+  {
+    "input": "Ebony Box.",
+    "normalise": "ebony box",
+    "sort_key": "ebony box",
+    "first_letter": "E"
+  },
+  {
+    "input": "Ecossais Novice.",
+    "normalise": "ecossais novice",
+    "sort_key": "ecossais novice",
+    "first_letter": "E"
+  },
+  {
+    "input": "Ecossais, Parisian.",
+    "normalise": "ecossais parisian",
+    "sort_key": "ecossais parisian",
+    "first_letter": "E"
+  },
+  {
+    "input": "Egyptian Months.",
+    "normalise": "egyptian months",
+    "sort_key": "egyptian months",
+    "first_letter": "E"
+  },
+  {
+    "input": "Elect Master.",
+    "normalise": "elect master",
+    "sort_key": "elect master",
+    "first_letter": "E"
+  },
+  {
+    "input": "Election of Officers.",
+    "normalise": "election of officers",
+    "sort_key": "election of officers",
+    "first_letter": "E"
+  },
+  {
+    "input": "Elus Coens, ou Prétres.",
+    "normalise": "elus coens ou pretres",
+    "sort_key": "elus coens ou pretres",
+    "first_letter": "E"
+  },
+  {
+    "input": "En Soph.",
+    "normalise": "en soph",
+    "sort_key": "en soph",
+    "first_letter": "E"
+  },
+  {
+    "input": "Entered.",
+    "normalise": "entered",
+    "sort_key": "entered",
+    "first_letter": "E"
+  },
+  {
+    "input": "Equilateral Triangle.",
+    "normalise": "equilateral triangle",
+    "sort_key": "equilateral triangle",
+    "first_letter": "E"
+  },
+  {
+    "input": "Ethics of Freemasonry.",
+    "normalise": "ethics of freemasonry",
+    "sort_key": "ethics of freemasonry",
+    "first_letter": "E"
+  },
+  {
+    "input": "Evergreen.",
+    "normalise": "evergreen",
+    "sort_key": "evergreen",
+    "first_letter": "E"
+  },
+  {
+    "input": "Exeuse.",
+    "normalise": "exeuse",
+    "sort_key": "exeuse",
+    "first_letter": "E"
+  },
+  {
+    "input": "Ezra.",
+    "normalise": "ezra",
+    "sort_key": "ezra",
+    "first_letter": "E"
+  },
+  {
+    "input": "Feeling.",
+    "normalise": "feeling",
+    "sort_key": "feeling",
+    "first_letter": "F"
+  },
+  {
+    "input": "Fessler, Rite of.",
+    "normalise": "fessler rite of",
+    "sort_key": "fessler rite of",
+    "first_letter": "F"
+  },
+  {
+    "input": "Fish.",
+    "normalise": "fish",
+    "sort_key": "fish",
+    "first_letter": "F"
+  },
+  {
+    "input": "Fords of the Jordan.",
+    "normalise": "fords of the jordan",
+    "sort_key": "fords of the jordan",
+    "first_letter": "F"
+  },
+  {
+    "input": "Fountain.",
+    "normalise": "fountain",
+    "sort_key": "fountain",
+    "first_letter": "F"
+  },
+  {
+    "input": "Frederick William II.",
+    "normalise": "frederick william ii",
+    "sort_key": "frederick william ii",
+    "first_letter": "F"
+  },
+  {
+    "input": "Frey or Frela.",
+    "normalise": "frey or frela",
+    "sort_key": "frey or frela",
+    "first_letter": "F"
+  },
+  {
+    "input": "Gabaonne.",
+    "normalise": "gabaonne",
+    "sort_key": "gabaonne",
+    "first_letter": "G"
+  },
+  {
+    "input": "General Assembly.",
+    "normalise": "general assembly",
+    "sort_key": "general assembly",
+    "first_letter": "G"
+  },
+  {
+    "input": "Gheb Eloak.",
+    "normalise": "gheb eloak",
+    "sort_key": "gheb eloak",
+    "first_letter": "G"
+  },
+  {
+    "input": "Goat, Riding the.",
+    "normalise": "goat riding the",
+    "sort_key": "goat riding the",
+    "first_letter": "G"
+  },
+  {
+    "input": "Goodall.",
+    "normalise": "goodall",
+    "sort_key": "goodall",
+    "first_letter": "G"
+  },
+  {
+    "input": "Grand Consistory.",
+    "normalise": "grand consistory",
+    "sort_key": "grand consistory",
+    "first_letter": "G"
+  },
+  {
+    "input": "Grand Master of Light.",
+    "normalise": "grand master of light",
+    "sort_key": "grand master of light",
+    "first_letter": "G"
+  },
+  {
+    "input": "Great Prlory.",
+    "normalise": "great prlory",
+    "sort_key": "great prlory",
+    "first_letter": "G"
+  },
+  {
+    "input": "Gugomos, Baron Von.",
+    "normalise": "gugomos baron von",
+    "sort_key": "gugomos baron von",
+    "first_letter": "G"
+  },
+  {
+    "input": "HAfedha.",
+    "normalise": "hafedha",
+    "sort_key": "hafedha",
+    "first_letter": "H"
+  },
+  {
+    "input": "Hand to Hand.",
+    "normalise": "hand to hand",
+    "sort_key": "hand to hand",
+    "first_letter": "H"
+  },
+  {
+    "input": "Harris, Thaddeus Mason.",
+    "normalise": "harris thaddeus mason",
+    "sort_key": "harris thaddeus mason",
+    "first_letter": "H"
+  },
+  {
+    "input": "Heldmann, Dr. Friedrich.",
+    "normalise": "heldmann dr friedrich",
+    "sort_key": "heldmann dr friedrich",
+    "first_letter": "H"
+  },
+  {
+    "input": "Heroine of Jericho.",
+    "normalise": "heroine of jericho",
+    "sort_key": "heroine of jericho",
+    "first_letter": "H"
+  },
+  {
+    "input": "Hinnom.",
+    "normalise": "hinnom",
+    "sort_key": "hinnom",
+    "first_letter": "H"
+  },
+  {
+    "input": "Ii.",
+    "normalise": "ii",
+    "sort_key": "ii",
+    "first_letter": "I"
+  },
+  {
+    "input": "In this work.",
+    "normalise": "in this work",
+    "sort_key": "in this work",
+    "first_letter": "I"
+  },
+  {
+    "input": "Iv.",
+    "normalise": "iv",
+    "sort_key": "iv",
+    "first_letter": "I"
+  },
+  {
+    "input": "Jaheb.",
+    "normalise": "jaheb",
+    "sort_key": "jaheb",
+    "first_letter": "J"
+  },
+  {
+    "input": "Jephthah.",
+    "normalise": "jephthah",
+    "sort_key": "jephthah",
+    "first_letter": "J"
+  },
+  {
+    "input": "Jewels, Precious.",
+    "normalise": "jewels precious",
+    "sort_key": "jewels precious",
+    "first_letter": "J"
+  },
+  {
+    "input": "Joinville, Chaillou de.",
+    "normalise": "joinville chaillou de",
+    "sort_key": "joinville chaillou de",
+    "first_letter": "J"
+  },
+  {
+    "input": "Jubal Cain.",
+    "normalise": "jubal cain",
+    "sort_key": "jubal cain",
+    "first_letter": "J"
+  },
+  {
+    "input": "Kaaba.",
+    "normalise": "kaaba",
+    "sort_key": "kaaba",
+    "first_letter": "K"
+  },
+  {
+    "input": "Keeper of the Seals.",
+    "normalise": "keeper of the seals",
+    "sort_key": "keeper of the seals",
+    "first_letter": "K"
+  },
+  {
+    "input": "Kilwinning Manuscript.",
+    "normalise": "kilwinning manuscript",
+    "sort_key": "kilwinning manuscript",
+    "first_letter": "K"
+  },
+  {
+    "input": "Knight.",
+    "normalise": "knight",
+    "sort_key": "knight",
+    "first_letter": "K"
+  },
+  {
+    "input": "Knight of Aurora.",
+    "normalise": "knight of aurora",
+    "sort_key": "knight of aurora",
+    "first_letter": "K"
+  },
+  {
+    "input": "Knight of Rose Croix.",
+    "normalise": "knight of rose croix",
+    "sort_key": "knight of rose croix",
+    "first_letter": "K"
+  },
+  {
+    "input": "Knight of the Columns.",
+    "normalise": "knight of the columns",
+    "sort_key": "knight of the columns",
+    "first_letter": "K"
+  },
+  {
+    "input": "Knight of the Golden Fleece.",
+    "normalise": "knight of the golden fleece",
+    "sort_key": "knight of the golden fleece",
+    "first_letter": "K"
+  },
+  {
+    "input": "Knight of the Rainbow.",
+    "normalise": "knight of the rainbow",
+    "sort_key": "knight of the rainbow",
+    "first_letter": "K"
+  },
+  {
+    "input": "Knight of the Tabernacle of the Divine Truths.",
+    "normalise": "knight of the tabernacle of the divine truths",
+    "sort_key": "knight of the tabernacle of the divine truths",
+    "first_letter": "K"
+  },
+  {
+    "input": "Knight, Sacrificing.",
+    "normalise": "knight sacrificing",
+    "sort_key": "knight sacrificing",
+    "first_letter": "K"
+  },
+  {
+    "input": "Krause, Carl Christian Friedrich.",
+    "normalise": "krause carl christian friedrich",
+    "sort_key": "krause carl christian friedrich",
+    "first_letter": "K"
+  },
+  {
+    "input": "Labarum.",
+    "normalise": "labarum",
+    "sort_key": "labarum",
+    "first_letter": "L"
+  },
+  {
+    "input": "Lady.",
+    "normalise": "lady",
+    "sort_key": "lady",
+    "first_letter": "L"
+  },
+  {
+    "input": "Larmenius, Johannes Marcus.",
+    "normalise": "larmenius johannes marcus",
+    "sort_key": "larmenius johannes marcus",
+    "first_letter": "L"
+  },
+  {
+    "input": "Law, Sacred.",
+    "normalise": "law sacred",
+    "sort_key": "law sacred",
+    "first_letter": "L"
+  },
+  {
+    "input": "Lecturer, Grand.",
+    "normalise": "lecturer grand",
+    "sort_key": "lecturer grand",
+    "first_letter": "L"
+  },
+  {
+    "input": "Leland Manuscript.",
+    "normalise": "leland manuscript",
+    "sort_key": "leland manuscript",
+    "first_letter": "L"
+  },
+  {
+    "input": "Levit, Der.",
+    "normalise": "levit der",
+    "sort_key": "levit der",
+    "first_letter": "L"
+  },
+  {
+    "input": "Library.",
+    "normalise": "library",
+    "sort_key": "library",
+    "first_letter": "L"
+  },
+  {
+    "input": "Limbs.",
+    "normalise": "limbs",
+    "sort_key": "limbs",
+    "first_letter": "L"
+  },
+  {
+    "input": "Lo Vengeance.",
+    "normalise": "lo vengeance",
+    "sort_key": "lo vengeance",
+    "first_letter": "L"
+  },
+  {
+    "input": "Lodge of Instruction.",
+    "normalise": "lodge of instruction",
+    "sort_key": "lodge of instruction",
+    "first_letter": "L"
+  },
+  {
+    "input": "Louis Napoleon.",
+    "normalise": "louis napoleon",
+    "sort_key": "louis napoleon",
+    "first_letter": "L"
+  },
+  {
+    "input": "Lyon, David Murray.",
+    "normalise": "lyon david murray",
+    "sort_key": "lyon david murray",
+    "first_letter": "L"
+  },
+  {
+    "input": "Magister Hospitalis.",
+    "normalise": "magister hospitalis",
+    "sort_key": "magister hospitalis",
+    "first_letter": "M"
+  },
+  {
+    "input": "Malachi or Malachias.",
+    "normalise": "malachi or malachias",
+    "sort_key": "malachi or malachias",
+    "first_letter": "M"
+  },
+  {
+    "input": "Manningham, of Roy teach, Thomas.",
+    "normalise": "manningham of roy teach thomas",
+    "sort_key": "manningham of roy teach thomas",
+    "first_letter": "M"
+  },
+  {
+    "input": "Martel.",
+    "normalise": "martel",
+    "sort_key": "martel",
+    "first_letter": "M"
+  },
+  {
+    "input": "Mason, Stone.",
+    "normalise": "mason stone",
+    "sort_key": "mason stone",
+    "first_letter": "M"
+  },
+  {
+    "input": "Master Architect, Prussian.",
+    "normalise": "master architect prussian",
+    "sort_key": "master architect prussian",
+    "first_letter": "M"
+  },
+  {
+    "input": "Master Mason.",
+    "normalise": "master mason",
+    "sort_key": "master mason",
+    "first_letter": "M"
+  },
+  {
+    "input": "Master of the Seven Kabbalistic Secrets, Mlustrious.",
+    "normalise": "master of the seven kabbalistic secrets mlustrious",
+    "sort_key": "master of the seven kabbalistic secrets mlustrious",
+    "first_letter": "M"
+  },
+  {
+    "input": "Matriculation Book.",
+    "normalise": "matriculation book",
+    "sort_key": "matriculation book",
+    "first_letter": "M"
+  },
+  {
+    "input": "Melchizedek.",
+    "normalise": "melchizedek",
+    "sort_key": "melchizedek",
+    "first_letter": "M"
+  },
+  {
+    "input": "Mesopolyte.",
+    "normalise": "mesopolyte",
+    "sort_key": "mesopolyte",
+    "first_letter": "M"
+  },
+  {
+    "input": "Minister of State.",
+    "normalise": "minister of state",
+    "sort_key": "minister of state",
+    "first_letter": "M"
+  },
+  {
+    "input": "Moderns.",
+    "normalise": "moderns",
+    "sort_key": "moderns",
+    "first_letter": "M"
+  },
+  {
+    "input": "Mopses.",
+    "normalise": "mopses",
+    "sort_key": "mopses",
+    "first_letter": "M"
+  },
+  {
+    "input": "Mot de Semestre.",
+    "normalise": "mot de semestre",
+    "sort_key": "mot de semestre",
+    "first_letter": "M"
+  },
+  {
+    "input": "Museus Domus.",
+    "normalise": "museus domus",
+    "sort_key": "museus domus",
+    "first_letter": "M"
+  },
+  {
+    "input": "Namur.",
+    "normalise": "namur",
+    "sort_key": "namur",
+    "first_letter": "N"
+  },
+  {
+    "input": "New Hampshire.",
+    "normalise": "new hampshire",
+    "sort_key": "new hampshire",
+    "first_letter": "N"
+  },
+  {
+    "input": "Noah, Precepts of.",
+    "normalise": "noah precepts of",
+    "sort_key": "noah precepts of",
+    "first_letter": "N"
+  },
+  {
+    "input": "Novice, Mythological.",
+    "normalise": "novice mythological",
+    "sort_key": "novice mythological",
+    "first_letter": "N"
+  },
+  {
+    "input": "Obedience of a Grand Body.",
+    "normalise": "obedience of a grand body",
+    "sort_key": "obedience of a grand body",
+    "first_letter": "O"
+  },
+  {
+    "input": "Ohar.",
+    "normalise": "ohar",
+    "sort_key": "ohar",
+    "first_letter": "O"
+  },
+  {
+    "input": "Operative Masonry.",
+    "normalise": "operative masonry",
+    "sort_key": "operative masonry",
+    "first_letter": "O"
+  },
+  {
+    "input": "Orders of the Day.",
+    "normalise": "orders of the day",
+    "sort_key": "orders of the day",
+    "first_letter": "O"
+  },
+  {
+    "input": "Orpheus.",
+    "normalise": "orpheus",
+    "sort_key": "orpheus",
+    "first_letter": "O"
+  },
+  {
+    "input": "Pachacamac.",
+    "normalise": "pachacamac",
+    "sort_key": "pachacamac",
+    "first_letter": "P"
+  },
+  {
+    "input": "Parallel Lines.",
+    "normalise": "parallel lines",
+    "sort_key": "parallel lines",
+    "first_letter": "P"
+  },
+  {
+    "input": "Past.",
+    "normalise": "past",
+    "sort_key": "past",
+    "first_letter": "P"
+  },
+  {
+    "input": "Pectoral of the High Priest.",
+    "normalise": "pectoral of the high priest",
+    "sort_key": "pectoral of the high priest",
+    "first_letter": "P"
+  },
+  {
+    "input": "Perau, Gabriel Louis Calabre.",
+    "normalise": "perau gabriel louis calabre",
+    "sort_key": "perau gabriel louis calabre",
+    "first_letter": "P"
+  },
+  {
+    "input": "Pernett? or Pernety, Antoine Joseph.",
+    "normalise": "pernett or pernety antoine joseph",
+    "sort_key": "pernett or pernety antoine joseph",
+    "first_letter": "P"
+  },
+  {
+    "input": "Philo Judeus.",
+    "normalise": "philo judeus",
+    "sort_key": "philo judeus",
+    "first_letter": "P"
+  },
+  {
+    "input": "Physical Qualifications.",
+    "normalise": "physical qualifications",
+    "sort_key": "physical qualifications",
+    "first_letter": "P"
+  },
+  {
+    "input": "Pitaka..",
+    "normalise": "pitaka",
+    "sort_key": "pitaka",
+    "first_letter": "P"
+  },
+  {
+    "input": "Points, Twelve Gtand.",
+    "normalise": "points twelve gtand",
+    "sort_key": "points twelve gtand",
+    "first_letter": "P"
+  },
+  {
+    "input": "Portugal.",
+    "normalise": "portugal",
+    "sort_key": "portugal",
+    "first_letter": "P"
+  },
+  {
+    "input": "Preparing Brother.",
+    "normalise": "preparing brother",
+    "sort_key": "preparing brother",
+    "first_letter": "P"
+  },
+  {
+    "input": "Priestly Order.",
+    "normalise": "priestly order",
+    "sort_key": "priestly order",
+    "first_letter": "P"
+  },
+  {
+    "input": "Prince of the Royal Secret.",
+    "normalise": "prince of the royal secret",
+    "sort_key": "prince of the royal secret",
+    "first_letter": "P"
+  },
+  {
+    "input": "Problem, Forty-Seventh.",
+    "normalise": "problem forty-seventh",
+    "sort_key": "problem forty seventh",
+    "first_letter": "P"
+  },
+  {
+    "input": "Protocol.",
+    "normalise": "protocol",
+    "sort_key": "protocol",
+    "first_letter": "P"
+  },
+  {
+    "input": "Pullen, William Hyde.",
+    "normalise": "pullen william hyde",
+    "sort_key": "pullen william hyde",
+    "first_letter": "P"
+  },
+  {
+    "input": "Quadrivium.",
+    "normalise": "quadrivium",
+    "sort_key": "quadrivium",
+    "first_letter": "Q"
+  },
+  {
+    "input": "Ragotzky, Carl A August.",
+    "normalise": "ragotzky carl a august",
+    "sort_key": "ragotzky carl a august",
+    "first_letter": "R"
+  },
+  {
+    "input": "Reconciliation, Lodge of.",
+    "normalise": "reconciliation lodge of",
+    "sort_key": "reconciliation lodge of",
+    "first_letter": "R"
+  },
+  {
+    "input": "Reffection, Chamber of.",
+    "normalise": "reffection chamber of",
+    "sort_key": "reffection chamber of",
+    "first_letter": "R"
+  },
+  {
+    "input": "Rejoicing.",
+    "normalise": "rejoicing",
+    "sort_key": "rejoicing",
+    "first_letter": "R"
+  },
+  {
+    "input": "Resurreetion.",
+    "normalise": "resurreetion",
+    "sort_key": "resurreetion",
+    "first_letter": "R"
+  },
+  {
+    "input": "Right Angle.",
+    "normalise": "right angle",
+    "sort_key": "right angle",
+    "first_letter": "R"
+  },
+  {
+    "input": "Robison, John.",
+    "normalise": "robison john",
+    "sort_key": "robison john",
+    "first_letter": "R"
+  },
+  {
+    "input": "Round Table, King Arthur’s.",
+    "normalise": "round table king arthur's",
+    "sort_key": "round table king arthur s",
+    "first_letter": "R"
+  },
+  {
+    "input": "Royal Arch Working-Tools.",
+    "normalise": "royal arch working-tools",
+    "sort_key": "royal arch working tools",
+    "first_letter": "R"
+  },
+  {
+    "input": "Sacred Lodge.",
+    "normalise": "sacred lodge",
+    "sort_key": "sacred lodge",
+    "first_letter": "S"
+  },
+  {
+    "input": "Saint George’s Day.",
+    "normalise": "saint george's day",
+    "sort_key": "saint george s day",
+    "first_letter": "S"
+  },
+  {
+    "input": "Salomonis Sanctificatus Iluminatus, Magnus Jehova.",
+    "normalise": "salomonis sanctificatus iluminatus magnus jehova",
+    "sort_key": "salomonis sanctificatus iluminatus magnus jehova",
+    "first_letter": "S"
+  },
+  {
+    "input": "Sardfus.",
+    "normalise": "sardfus",
+    "sort_key": "sardfus",
+    "first_letter": "S"
+  },
+  {
+    "input": "Schools.",
+    "normalise": "schools",
+    "sort_key": "schools",
+    "first_letter": "S"
+  },
+  {
+    "input": "Seald Miserables.",
+    "normalise": "seald miserables",
+    "sort_key": "seald miserables",
+    "first_letter": "S"
+  },
+  {
+    "input": "Secular Lodges.",
+    "normalise": "secular lodges",
+    "sort_key": "secular lodges",
+    "first_letter": "S"
+  },
+  {
+    "input": "Seottish Master.",
+    "normalise": "seottish master",
+    "sort_key": "seottish master",
+    "first_letter": "S"
+  },
+  {
+    "input": "Shaddal.",
+    "normalise": "shaddal",
+    "sort_key": "shaddal",
+    "first_letter": "S"
+  },
+  {
+    "input": "Shintoism.",
+    "normalise": "shintoism",
+    "sort_key": "shintoism",
+    "first_letter": "S"
+  },
+  {
+    "input": "Silent Brotherhood.",
+    "normalise": "silent brotherhood",
+    "sort_key": "silent brotherhood",
+    "first_letter": "S"
+  },
+  {
+    "input": "Solomon.",
+    "normalise": "solomon",
+    "sort_key": "solomon",
+    "first_letter": "S"
+  },
+  {
+    "input": "Sovereign Prince of Rose Croix.",
+    "normalise": "sovereign prince of rose croix",
+    "sort_key": "sovereign prince of rose croix",
+    "first_letter": "S"
+  },
+  {
+    "input": "St. Alban's Regulations.",
+    "normalise": "st alban's regulations",
+    "sort_key": "st alban s regulations",
+    "first_letter": "S"
+  },
+  {
+    "input": "State.",
+    "normalise": "state",
+    "sort_key": "state",
+    "first_letter": "S"
+  },
+  {
+    "input": "Stone, William Leete.",
+    "normalise": "stone william leete",
+    "sort_key": "stone william leete",
+    "first_letter": "S"
+  },
+  {
+    "input": "Submission.",
+    "normalise": "submission",
+    "sort_key": "submission",
+    "first_letter": "S"
+  },
+  {
+    "input": "Supreme Consistory.",
+    "normalise": "supreme consistory",
+    "sort_key": "supreme consistory",
+    "first_letter": "S"
+  },
+  {
+    "input": "SyHable.",
+    "normalise": "syhable",
+    "sort_key": "syhable",
+    "first_letter": "S"
+  },
+  {
+    "input": "T. McClenachan.]} Suspension.",
+    "normalise": "t mcclenachan suspension",
+    "sort_key": "t mcclenachan suspension",
+    "first_letter": "T"
+  },
+  {
+    "input": "Tatnaf and Shethar-Boznal.",
+    "normalise": "tatnaf and shethar-boznal",
+    "sort_key": "tatnaf and shethar boznal",
+    "first_letter": "T"
+  },
+  {
+    "input": "Temple of Ezekiel.",
+    "normalise": "temple of ezekiel",
+    "sort_key": "temple of ezekiel",
+    "first_letter": "T"
+  },
+  {
+    "input": "Terrubia, Joseph.",
+    "normalise": "terrubia joseph",
+    "sort_key": "terrubia joseph",
+    "first_letter": "T"
+  },
+  {
+    "input": "Theopaschites.",
+    "normalise": "theopaschites",
+    "sort_key": "theopaschites",
+    "first_letter": "T"
+  },
+  {
+    "input": "Thuribfe.",
+    "normalise": "thuribfe",
+    "sort_key": "thuribfe",
+    "first_letter": "T"
+  },
+  {
+    "input": "Token.",
+    "normalise": "token",
+    "sort_key": "token",
+    "first_letter": "T"
+  },
+  {
+    "input": "Transmission, Charter of.",
+    "normalise": "transmission charter of",
+    "sort_key": "transmission charter of",
+    "first_letter": "T"
+  },
+  {
+    "input": "Tribunal, Supreme.",
+    "normalise": "tribunal supreme",
+    "sort_key": "tribunal supreme",
+    "first_letter": "T"
+  },
+  {
+    "input": "Tschoudy, Louis Theodore.",
+    "normalise": "tschoudy louis theodore",
+    "sort_key": "tschoudy louis theodore",
+    "first_letter": "T"
+  },
+  {
+    "input": "Twenty-Four-Inch Gage.",
+    "normalise": "twenty-four-inch gage",
+    "sort_key": "twenty four inch gage",
+    "first_letter": "T"
+  },
+  {
+    "input": "United Friars, Fraternity of.",
+    "normalise": "united friars fraternity of",
+    "sort_key": "united friars fraternity of",
+    "first_letter": "U"
+  },
+  {
+    "input": "Vaeaneies in Office.",
+    "normalise": "vaeaneies in office",
+    "sort_key": "vaeaneies in office",
+    "first_letter": "V"
+  },
+  {
+    "input": "Vielle-Bru, Bite of.",
+    "normalise": "vielle-bru bite of",
+    "sort_key": "vielle bru bite of",
+    "first_letter": "V"
+  },
+  {
+    "input": "Voyages.",
+    "normalise": "voyages",
+    "sort_key": "voyages",
+    "first_letter": "V"
+  },
+  {
+    "input": "Warrant of Constitution.",
+    "normalise": "warrant of constitution",
+    "sort_key": "warrant of constitution",
+    "first_letter": "W"
+  },
+  {
+    "input": "Westphalia, Secret Tribunals of.",
+    "normalise": "westphalia secret tribunals of",
+    "sort_key": "westphalia secret tribunals of",
+    "first_letter": "W"
+  },
+  {
+    "input": "Wisconsin.",
+    "normalise": "wisconsin",
+    "sort_key": "wisconsin",
+    "first_letter": "W"
+  },
+  {
+    "input": "Workshop.",
+    "normalise": "workshop",
+    "sort_key": "workshop",
+    "first_letter": "W"
+  },
+  {
+    "input": "Xerxes.",
+    "normalise": "xerxes",
+    "sort_key": "xerxes",
+    "first_letter": "X"
+  },
+  {
+    "input": "Yggdrasil.",
+    "normalise": "yggdrasil",
+    "sort_key": "yggdrasil",
+    "first_letter": "Y"
+  },
+  {
+    "input": "Zarvan-akar-ana.",
+    "normalise": "zarvan-akar-ana",
+    "sort_key": "zarvan akar ana",
+    "first_letter": "Z"
+  },
+  {
+    "input": "Zoan.",
+    "normalise": "zoan",
+    "sort_key": "zoan",
+    "first_letter": "Z"
+  }
+]

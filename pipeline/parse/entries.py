@@ -146,7 +146,11 @@ def _extend_backwards(words: list[Word], start: int, loose: float) -> int:
         else:
             break
         text = previous.text.strip()
-        if text.endswith(SENTENCE_END) and not _is_abbreviation(text):
+        # Must use the same test as the anchor check below. With a narrower
+        # one, the walk stepped over "Ground.)" into the previous sentence,
+        # and the span it built then failed its own anchor test and was lost
+        # -- which is how "Zerubbabel." went missing entirely.
+        if SENTENCE_CLOSE.search(text) and not _is_abbreviation(text):
             break                               # that is the previous entry
         is_connector = text.lower().strip(",") in CONNECTORS
         if previous.stroke_width < loose and not is_connector:
@@ -195,8 +199,11 @@ def _headword_spans(words: list[Word], loose_threshold: float = 0.0) -> list[tup
             # on the first one truncates the headword and leaves the remainder
             # to open a spurious entry out of alphabetical order.
             following = words[position + 1] if position + 1 < len(words) else None
-            if following is not None and following.bold:
-                continue                      # bold continues: still inside it
+            # Only an abbreviation or initial keeps a headword open past a full
+            # stop. Treating "the next word is also bold" as continuation was
+            # too loose: a short word after the headword can measure bold by
+            # itself, and "Zerubbabel. In writing..." then never closed, losing
+            # the entry altogether.
             if _is_abbreviation(candidate.text) and following is not None:
                 continue                      # "St.", "J.", "Mt." are internal
             end = position
