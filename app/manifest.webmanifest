@@ -1,0 +1,14 @@
+{
+  "name": "Mackey's Encyclopaedia of Freemasonry",
+  "short_name": "Mackey",
+  "description": "Albert G. Mackey's Encyclopaedia of Freemasonry (1912), searchable offline.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f2ee",
+  "theme_color": "#f3f2ee",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -25,3 +25,6 @@ build/
 
 # Exported web data: regenerable from dictionary.db
 app/public/data/
+
+# Built app: regenerable with node app/build.mjs
+app/dist/
