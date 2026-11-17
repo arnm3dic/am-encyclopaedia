@@ -33,6 +33,7 @@ os.environ.setdefault("OMP_THREAD_LIMIT", "1")
 
 from pipeline.extract.ocr import (ExtractionError, page_from_dict, page_to_dict,
                                   read_page)
+from pipeline.corrections import ocr_fixes, triage
 from pipeline.parse import regions
 from pipeline.parse.entries import Entry, parse_page
 from pipeline.validate import checks
@@ -92,7 +93,8 @@ def parse_one(path: Path) -> dict:
         "p75_stroke": round(page.p75_stroke, 2),
         "bold_threshold": round(page.bold_threshold, 2),
         "mean_conf": round(page.mean_conf, 1),
-        "entries": [e.as_dict() for e in entries],
+        "entries": [dict(e.as_dict(), page_has_guides=bool(head.left_guide and head.right_guide))
+                    for e in entries],
     }
 
 
@@ -153,10 +155,33 @@ def interpolate_folios(records: list[dict]) -> int:
     return filled
 
 
-def aggregate(out_dir: Path) -> dict:
+def aggregate(out_dir: Path, correct: bool = True) -> dict:
     words_dir = out_dir / "words"
     records = [parse_one(p) for p in sorted(words_dir.glob("p*.json"))]
     interpolated = interpolate_folios(records)
+
+    # Phase 3: decide the held-back candidates and repair headword misreads,
+    # both against alphabetical order, before anything else is computed.
+    decisions: list = []
+    fixes: list = []
+    promoted = 0
+    if correct:
+        sequence = [raw for record in sorted(records, key=lambda r: r["pdf_page"])
+                    for raw in record.get("entries", [])]
+        overrides_path = Path(__file__).resolve().parent / "corrections" / "overrides.json"
+        if overrides_path.exists():
+            overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
+            fixes += ocr_fixes.apply_overrides(sequence, overrides)
+        fixes += ocr_fixes.strip_artifacts(sequence)
+        decisions, promoted = triage.triage(sequence)
+        fixes += ocr_fixes.repair(sequence)
+
+        (out_dir / "decisions.json").write_text(
+            json.dumps([d.as_dict() for d in decisions], indent=2, ensure_ascii=False),
+            encoding="utf-8")
+        (out_dir / "fixes.json").write_text(
+            json.dumps([f.as_dict() for f in fixes], indent=2, ensure_ascii=False),
+            encoding="utf-8")
 
     # Push interpolated folios down onto the entries themselves.
     folio_by_page = {r["pdf_page"]: r.get("printed_page") for r in records}
@@ -185,6 +210,9 @@ def aggregate(out_dir: Path) -> dict:
         letters[entry.as_dict()["letter"]] = letters.get(entry.as_dict()["letter"], 0) + 1
 
     summary.update({
+        "candidates_promoted": promoted,
+        "candidates_considered": len(decisions),
+        "ocr_headword_fixes": len(fixes),
         "pages_processed": len(records),
         "regions": regions_count,
         "folios_interpolated": interpolated,

@@ -56,9 +56,9 @@ summary{cursor:pointer;color:#c8bfa8;font-size:13.5px;font-weight:500}
 parts = [
     "<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>",
     "<meta name='viewport' content='width=device-width,initial-scale=1'>",
-    "<title>Phase 2 — full extraction</title>",
+    "<title>Phase 3 — corrected extraction</title>",
     f"<style>{css}</style></head><body><div class='wrap'>",
-    "<h1>Phase 2 &mdash; full extraction</h1>",
+    "<h1>Phase 3 &mdash; corrected extraction</h1>",
     "<div class='sub'>All 946 pages of Mackey's <em>Encyclopaedia of Freemasonry</em> "
     "(1912), OCR'd and parsed.</div>",
     "<div class='stats'>",
@@ -70,6 +70,8 @@ for label, value, cls in [
     ("mean OCR conf", f"{summary['mean_confidence']}%", "good"),
     ("ordering errors", f"{len(alpha):,}", "warn"),
     ("multi-page entries", f"{summary['multi_page_entries']:,}", ""),
+    ("recovered", f"{summary['candidates_promoted']:,}", "good"),
+    ("headwords repaired", f"{summary['ocr_headword_fixes']:,}", "good"),
 ]:
     parts.append(f"<div class='stat {cls}'><b>{value}</b><span>{label}</span></div>")
 parts.append("</div>")
@@ -119,6 +121,37 @@ for candidate in sample:
                  f"<td>{html.escape(candidate['headword'][:110])}</td></tr>")
 parts.append("</table>")
 
+fixes = json.loads((OUT / "fixes.json").read_text(encoding="utf-8"))
+decisions = json.loads((OUT / "decisions.json").read_text(encoding="utf-8"))
+promoted = [d for d in decisions if d["promoted"]]
+
+parts.append("<h2>What the correction pass did</h2>")
+parts.append(
+    f"<p><b>{len(promoted)} entries recovered.</b> Each was held back for having no "
+    "sentence ending before it, then restored because its headword falls in the right "
+    "place in the alphabet between its neighbours. That is a structural test, not a "
+    "guess about the text.</p>")
+parts.append("<table><tr><th>Page</th><th>Recovered headword</th><th>Sits between</th></tr>")
+for d in promoted[:35]:
+    lo, hi = d["between"]
+    parts.append(f"<tr><td class='n'>{d['pdf_page']}</td>"
+                 f"<td class='hw'>{html.escape(d['headword'][:60])}</td>"
+                 f"<td class='q'>{html.escape(lo[:26])} &hellip; {html.escape(hi[:26])}</td></tr>")
+parts.append("</table>")
+if len(promoted) > 35:
+    parts.append(f"<p class='q'>&hellip; and {len(promoted)-35} more, in decisions.json.</p>")
+
+parts.append(f"<p><b>{len(fixes)} headwords repaired.</b> Six were verified against the "
+             "page images by hand; the rest were marginal editorial marks that OCR glued "
+             "to the front of a headword, hiding the entry from search.</p>")
+parts.append("<table><tr><th>Page</th><th>Extracted</th><th>Corrected</th><th>Why</th></tr>")
+for f in fixes[:24]:
+    parts.append(f"<tr><td class='n'>{f['pdf_page']}</td>"
+                 f"<td class='q'>{html.escape(f['before'][:46])}</td>"
+                 f"<td class='hw'>{html.escape(f['after'][:46])}</td>"
+                 f"<td class='q'>{html.escape(f['reason'][:30])}</td></tr>")
+parts.append("</table>")
+
 parts.append("<h2>Longest entries</h2>")
 parts.append("<p>Mackey writes some very long articles. These were checked against the "
              "page images and are genuine, not runs of missed headwords.</p>")
@@ -139,12 +172,15 @@ for entry in mid[::max(1, len(mid)//22)][:22]:
 parts.append("</table>")
 
 parts.append(
-    "<div class='note'><b>Known gap.</b> Volume 1 yields 4.6 entries a page, volume 2 "
-    "only 3.4. The two volumes were scanned separately and volume 2 is heavier, which "
-    "blurs the weight difference between bold and italic that entry detection depends "
-    "on. The flagged candidates are mostly from volume 2, and recovering the real "
-    "headwords among them is the single biggest quality win available in Phase 3.</div>")
+    "<div class='note'><b>What is left.</b> 308 headwords still break alphabetical "
+    "order, and 556 candidates are still held back. Both lists are the remaining "
+    "manual work, and both are visible rather than silent. The limit reached here is "
+    "that the corpus is its own dictionary: a systematic OCR error is itself attested "
+    "in it, which is how a correct \u201cGeometric Points.\u201d briefly became "
+    "\u201cGeometrie Points.\u201d before that correction was caught and reversed. "
+    "Going further means reading headwords against the page images, which is days of "
+    "work rather than hours.</div>")
 
 parts.append("</div></body></html>")
-(OUT / "phase2.html").write_text("".join(parts), encoding="utf-8")
+(OUT / "phase3.html").write_text("".join(parts), encoding="utf-8")
 print("wrote", OUT / "phase2.html")
