@@ -26,6 +26,20 @@ let history: Screen[] = [];
 
 const root = document.getElementById("app") as HTMLElement;
 const backButton = document.getElementById("back") as HTMLButtonElement;
+const searchbar = document.getElementById("searchbar") as HTMLElement;
+
+/*
+  The search field is created once and never replaced.
+
+  It used to be part of each screen, so every keystroke rebuilt the element
+  being typed into: the caret jumped, and on a phone the keyboard closed and
+  reopened. Keeping it outside the screens also means suggestions can appear
+  under it without the screen behind them re-rendering.
+*/
+let input: HTMLInputElement;
+let suggestPanel: HTMLElement;
+let suggestions: Result[] = [];
+let activeSuggestion = -1;
 
 function go(next: Screen, replace = false): void {
   if (!replace) history.push(screen);
@@ -45,6 +59,14 @@ backButton.addEventListener("click", back);
 
 function render(): void {
   backButton.hidden = history.length === 0;
+  // Navigation can change the query without the field knowing: a letter from
+  // the alphabet strip, or Back. Keep the box showing what is on screen.
+  if (input) {
+    const shown = screen.name === "results" && !screen.query.startsWith("letter:")
+      ? screen.query
+      : screen.name === "home" ? "" : input.value;
+    if (document.activeElement !== input) input.value = shown;
+  }
   root.innerHTML = "";
   if (!dictionary) {
     root.append(element("div", { class: "loading" }, "Opening the encyclopaedia…"));
@@ -61,7 +83,6 @@ function renderHome(): HTMLElement {
   hero.append(
     element("h1", {}, "Mackey's Encyclopaedia of Freemasonry"),
     element("p", {}, `${dictionary!.size.toLocaleString()} articles from the revised edition of 1912, searchable offline.`),
-    searchField(""),
   );
   wrap.append(hero, renderAlphabet());
   return wrap;
@@ -96,60 +117,191 @@ function renderAlphabet(): HTMLElement {
   return section;
 }
 
-function searchField(value: string): HTMLElement {
+function buildSearchBar(): void {
+  const wrap = element("div", { class: "wrap" });
   const field = element("div", { class: "search-field" });
-  const input = element("input", {
+
+  input = element("input", {
     type: "search",
-    value,
     placeholder: "Search 3,952 articles",
     autocapitalize: "none",
     autocorrect: "off",
     spellcheck: "false",
+    role: "combobox",
+    "aria-expanded": "false",
+    "aria-controls": "suggest",
+    "aria-autocomplete": "list",
     "aria-label": "Search the encyclopaedia",
   }) as HTMLInputElement;
 
   const clear = element("button", {
     class: "search-clear", type: "button", "aria-label": "Clear search",
-  }, "×");
-  clear.hidden = value === "";
+  }, "\u00d7");
+  clear.hidden = true;
 
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  suggestPanel = element("div", { class: "suggest", id: "suggest", role: "listbox" });
+  suggestPanel.hidden = true;
+
   input.addEventListener("input", () => {
     clear.hidden = input.value === "";
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      const query = input.value.trim();
-      if (query.length === 0) {
-        if (screen.name === "results") go({ name: "home" }, true);
-        return;
+    showSuggestions(input.value);
+  });
+
+  input.addEventListener("keydown", (event) => {
+    const key = (event as KeyboardEvent).key;
+    if (key === "ArrowDown" || key === "ArrowUp") {
+      if (suggestions.length === 0) return;
+      event.preventDefault();
+      const step = key === "ArrowDown" ? 1 : -1;
+      activeSuggestion = (activeSuggestion + step + suggestions.length + 1) %
+        (suggestions.length + 1) - (step === -1 && activeSuggestion === -1 ? 0 : 0);
+      if (activeSuggestion > suggestions.length - 1) activeSuggestion = -1;
+      if (activeSuggestion < -1) activeSuggestion = suggestions.length - 1;
+      markActive();
+    } else if (key === "Enter") {
+      event.preventDefault();
+      if (activeSuggestion >= 0 && suggestions[activeSuggestion]) {
+        openEntry(suggestions[activeSuggestion].id, input.value.trim());
+      } else {
+        runSearch(input.value.trim());
       }
-      const caret = input.selectionStart;
-      go({ name: "results", query }, screen.name === "results");
-      // Keep typing where it was: re-rendering replaced the field.
-      const next = root.querySelector("input") as HTMLInputElement | null;
-      if (next) {
-        next.focus();
-        if (caret !== null) next.setSelectionRange(caret, caret);
-      }
-    }, 90);
+    } else if (key === "Escape") {
+      hideSuggestions();
+    }
+  });
+
+  input.addEventListener("blur", () => {
+    // Late enough for a click on a suggestion to land first.
+    setTimeout(hideSuggestions, 120);
+  });
+
+  input.addEventListener("focus", () => {
+    if (input.value.trim()) showSuggestions(input.value);
   });
 
   clear.addEventListener("click", () => {
     input.value = "";
     clear.hidden = true;
-    go({ name: "home" }, screen.name === "results");
-    (root.querySelector("input") as HTMLInputElement | null)?.focus();
+    hideSuggestions();
+    go({ name: "home" }, screen.name !== "home");
+    input.focus();
   });
 
   field.append(input, clear);
-  return field;
+  wrap.append(field, suggestPanel);
+  searchbar.append(wrap);
+}
+
+/**
+ * Headword matches, as the characters arrive.
+ *
+ * Headword search needs no index and answers in well under a millisecond, so
+ * this runs on every keystroke without debouncing. Definitions are not
+ * searched here: that would need the big index and would stall typing.
+ */
+function showSuggestions(raw: string): void {
+  const query = raw.trim();
+  activeSuggestion = -1;
+  if (!dictionary || query.length < 1) {
+    hideSuggestions();
+    return;
+  }
+
+  suggestions = dictionary.suggest(query, 8);
+  suggestPanel.innerHTML = "";
+
+  if (suggestions.length === 0) {
+    const near = dictionary.headwords.fuzzy(query, 4);
+    if (near.length === 0) {
+      hideSuggestions();
+      return;
+    }
+    suggestions = near.flatMap((hit) => {
+      const entry = dictionary!.entry(hit.id);
+      return entry
+        ? [{ id: hit.id, headword: entry.headword, letter: "", printedPage: entry.printedPage, band: Band.FuzzyHeadword, score: 0 }]
+        : [];
+    });
+  }
+
+  suggestions.forEach((result, position) => {
+    const option = element("button", {
+      class: "suggestion", type: "button", role: "option",
+      id: `suggestion-${position}`, "aria-selected": "false",
+    });
+    option.append(markMatch(result.headword, query));
+    if (result.band === Band.FuzzyHeadword) {
+      option.append(element("em", {}, "closest match"));
+    } else if (result.printedPage) {
+      option.append(element("em", {}, `page ${result.printedPage}`));
+    }
+    option.addEventListener("mousedown", (event) => event.preventDefault());
+    option.addEventListener("click", () => openEntry(result.id, query));
+    suggestPanel.append(option);
+  });
+
+  const all = element("button", {
+    class: "suggestion suggest-all", type: "button",
+  }, `Search every article for \u201c${query}\u201d`);
+  all.addEventListener("mousedown", (event) => event.preventDefault());
+  all.addEventListener("click", () => runSearch(query));
+  suggestPanel.append(all);
+
+  suggestPanel.hidden = false;
+  input.setAttribute("aria-expanded", "true");
+}
+
+/** Mark where the query falls inside the headword. */
+function markMatch(headword: string, query: string): HTMLElement {
+  const line = element("span");
+  const at = headword.toLowerCase().indexOf(query.toLowerCase());
+  if (at === -1) {
+    line.textContent = headword;
+    return line;
+  }
+  if (at > 0) line.append(headword.slice(0, at));
+  line.append(element("mark", {}, headword.slice(at, at + query.length)));
+  line.append(headword.slice(at + query.length));
+  return line;
+}
+
+function markActive(): void {
+  const options = suggestPanel.children;
+  for (let i = 0; i < options.length; i++) {
+    const option = options[i] as HTMLElement;
+    const selected = i === activeSuggestion;
+    option.setAttribute("aria-selected", selected ? "true" : "false");
+  }
+  input.setAttribute("aria-activedescendant",
+    activeSuggestion >= 0 ? `suggestion-${activeSuggestion}` : "");
+}
+
+function hideSuggestions(): void {
+  suggestions = [];
+  activeSuggestion = -1;
+  suggestPanel.hidden = true;
+  suggestPanel.innerHTML = "";
+  input.setAttribute("aria-expanded", "false");
+}
+
+function openEntry(id: number, query: string): void {
+  hideSuggestions();
+  input.blur();
+  go({ name: "entry", id, query });
+}
+
+function runSearch(query: string): void {
+  hideSuggestions();
+  input.blur();
+  if (!query) {
+    go({ name: "home" }, screen.name !== "home");
+    return;
+  }
+  go({ name: "results", query }, screen.name === "results");
 }
 
 function renderResults(query: string): HTMLElement {
   const wrap = element("div", { class: "wrap" });
-  wrap.append(element("div", { style: "padding-top:1rem" }, searchField(
-    query.startsWith("letter:") ? "" : query)));
-
   const results = query.startsWith("letter:")
     ? dictionary!.byLetter(query.slice(7))
     : dictionary!.search(query, { limit: 120 });
@@ -334,6 +486,7 @@ async function start(): Promise<void> {
     const loaded = await loadDictionary("data");
     dictionary = loaded.dictionary;
     meta = loaded.meta;
+    buildSearchBar();
     render();
 
     // Build the definition index once the first paint is done, then repeat the

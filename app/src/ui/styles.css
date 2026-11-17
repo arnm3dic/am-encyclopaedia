@@ -384,3 +384,79 @@ mark {
   .hero { padding: 3.5rem 0 2rem; }
   .hero h1 { font-size: 2.125rem; }
 }
+
+/* ---------- persistent search bar ---------- */
+
+/*
+  The field lives outside the screens and is never re-rendered. Rebuilding it
+  on each keystroke destroyed the element being typed into, which dropped the
+  caret and, on a phone, dismissed the keyboard.
+*/
+.searchbar {
+  position: sticky;
+  top: 3.25rem;
+  z-index: 15;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  padding: 0.625rem 0 0.75rem;
+}
+
+.searchbar .wrap { position: relative; }
+
+.suggest {
+  position: absolute;
+  left: 1.25rem;
+  right: 1.25rem;
+  top: calc(100% + 2px);
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.10);
+  max-height: 60vh;
+  overflow-y: auto;
+  z-index: 30;
+}
+
+@media (prefers-color-scheme: dark) {
+  .suggest { box-shadow: 0 6px 18px rgb(0 0 0 / 0.45); }
+}
+
+.suggest[hidden] { display: none; }
+
+.suggestion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 0.5625rem 0.8125rem;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.suggestion:last-child { border-bottom: 0; }
+.suggestion:hover,
+.suggestion[aria-selected="true"] { background: var(--craft-soft); }
+
+.suggestion mark { background: none; color: var(--craft); font-weight: 600; }
+
+.suggestion em {
+  display: block;
+  font-style: normal;
+  font-size: 0.8125rem;
+  color: var(--ink-faint);
+  font-family: var(--sans);
+  margin-top: 0.0625rem;
+}
+
+.suggest-all {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  color: var(--craft);
+  border-top: 1px solid var(--rule-strong);
+}

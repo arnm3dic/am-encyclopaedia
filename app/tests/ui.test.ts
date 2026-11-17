@@ -66,16 +66,35 @@ class StubNode {
   getAttribute(name: string): string | null {
     return this.attributes.get(name) ?? null;
   }
-  addEventListener(name: string, fn: () => void): void {
+  addEventListener(name: string, fn: (event?: unknown) => void): void {
     const list = this.listeners.get(name) ?? [];
-    list.push(fn);
+    list.push(fn as () => void);
     this.listeners.set(name, list);
   }
-  click(): void {
-    for (const fn of this.listeners.get("click") ?? []) fn();
+  dispatch(name: string, event: Record<string, unknown> = {}): void {
+    const payload = { preventDefault: () => {}, ...event };
+    for (const fn of this.listeners.get(name) ?? []) {
+      (fn as (e: unknown) => void)(payload);
+    }
   }
-  focus(): void {}
+  click(): void {
+    this.dispatch("click");
+  }
+  focus(): void {
+    activeElement = this;
+  }
+  blur(): void {
+    if (activeElement === this) activeElement = null;
+  }
   setSelectionRange(): void {}
+
+  /** Type into this node as a person would, character by character. */
+  type(text: string): void {
+    for (const character of text) {
+      this.value += character;
+      this.dispatch("input");
+    }
+  }
 
   get className(): string {
     return this.attributes.get("class") ?? "";
@@ -96,10 +115,19 @@ class StubNode {
 
 const app = new StubNode("main");
 const backButton = new StubNode("button");
+const searchbar = new StubNode("div");
+let activeElement: StubNode | null = null;
+
+const nodesById: Record<string, StubNode> = {
+  app, back: backButton, searchbar,
+};
 
 const documentStub = {
   createElement: (tag: string) => new StubNode(tag),
-  getElementById: (id: string) => (id === "app" ? app : backButton),
+  getElementById: (id: string) => nodesById[id] ?? new StubNode("div"),
+  get activeElement() {
+    return activeElement;
+  },
 };
 
 const dataDir = fileURLToPath(new URL("../public/data/", import.meta.url));
@@ -176,4 +204,103 @@ test("back returns to the previous screen", () => {
   assert.equal(backButton.hidden, false, "back button hidden when there is history");
   backButton.click();
   assert.ok(/entries under A/.test(app.textContent), "back did not return to the listing");
+});
+
+
+/* ---------- the search box ---------- */
+
+function searchInput(): StubNode {
+  const found = searchbar.all().find((node) => node.tagName === "input");
+  assert.ok(found, "no search input on the page");
+  return found!;
+}
+
+function suggestionButtons(): StubNode[] {
+  return searchbar.find("suggestion").filter((node) =>
+    !node.className.includes("suggest-all"));
+}
+
+test("typed characters stay in the box", () => {
+  const box = searchInput();
+  box.value = "";
+  box.type("acac");
+  assert.equal(box.value, "acac", "the box lost what was typed into it");
+  assert.equal(searchInput(), box, "the input element was replaced while typing");
+});
+
+test("suggestions appear while typing, without pressing anything", () => {
+  const box = searchInput();
+  box.value = "";
+  box.type("tetra");
+
+  const options = suggestionButtons();
+  assert.ok(options.length > 0, "no suggestions offered");
+  for (const option of options) {
+    assert.ok(option.textContent.toLowerCase().includes("tetra"),
+      `unrelated suggestion: ${option.textContent}`);
+  }
+});
+
+test("suggestions narrow as more characters arrive", () => {
+  const box = searchInput();
+  box.value = "";
+  box.type("te");
+  const broad = suggestionButtons().length;
+  box.type("tragram");
+  const narrow = suggestionButtons().length;
+  assert.ok(narrow <= broad, `got wider: ${broad} then ${narrow}`);
+  assert.ok(narrow > 0, "narrowing lost everything");
+});
+
+test("the matched part of each suggestion is marked", () => {
+  const box = searchInput();
+  box.value = "";
+  box.type("acac");
+  const marks = searchbar.all().filter((node) => node.tagName === "mark");
+  assert.ok(marks.length > 0, "nothing marked in the suggestions");
+  assert.ok(marks.every((m) => m.textContent.toLowerCase() === "acac"),
+    "marked the wrong characters");
+});
+
+test("choosing a suggestion opens that entry", () => {
+  const box = searchInput();
+  box.value = "";
+  box.type("acacia");
+  const first = suggestionButtons()[0];
+  const wanted = first.textContent;
+  first.click();
+
+  assert.equal(app.find("entry").length, 1, "no entry opened");
+  const heading = app.all().find((node) => node.tagName === "h1");
+  assert.ok(heading && wanted.startsWith(heading.textContent.slice(0, 6)),
+    `opened ${heading?.textContent} for ${wanted}`);
+  assert.equal(suggestionButtons().length, 0, "suggestions stayed open");
+});
+
+test("a misspelling still offers the right entry", () => {
+  const box = searchInput();
+  box.value = "";
+  box.type("Kadsoh");
+  const options = suggestionButtons();
+  assert.ok(options.length > 0, "no near matches offered");
+  assert.ok(options.some((o) => o.textContent.toLowerCase().includes("kadosh")),
+    `no Kadosh among: ${options.map((o) => o.textContent).join(", ")}`);
+});
+
+test("Enter searches everything rather than opening a suggestion", () => {
+  const box = searchInput();
+  box.value = "";
+  box.type("temple");
+  box.dispatch("keydown", { key: "Enter" });
+  assert.ok(/results? for/.test(app.textContent),
+    `expected a results screen, got: ${app.textContent.slice(0, 100)}`);
+});
+
+test("Escape dismisses the suggestions", () => {
+  const box = searchInput();
+  box.value = "";
+  box.type("tem");
+  assert.ok(suggestionButtons().length > 0, "nothing to dismiss");
+  box.dispatch("keydown", { key: "Escape" });
+  assert.equal(suggestionButtons().length, 0, "suggestions survived Escape");
 });
