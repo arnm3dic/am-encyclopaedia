@@ -28,3 +28,6 @@ app/public/data/
 
 # Built app: regenerable with node app/build.mjs
 app/dist/
+
+# The reference text: 5 MB, downloaded from the Internet Archive, regenerable
+build/reference/mackey1874.txt

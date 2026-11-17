@@ -168,6 +168,63 @@ def plan(entries: list[dict], attested: set[str] | None = None) -> list[BodyFix]
     return fixes
 
 
+def plan_against(entries: list[dict], lexicon: Counter, trusted: set[str],
+                 min_evidence: int = 5, margin: float = 0.4) -> list[BodyFix]:
+    """Repairs attested by the other printing, applied across the whole book.
+
+    The article-by-article comparison in corrections/reference.py can only fix
+    a word inside an article it managed to locate, and it locates about nine in
+    ten -- the rest are articles the 1914 revision added, which do not exist in
+    the 1874 book. It also works on the aligned words, so a word the scan
+    broke across a line and rejoined wrongly can slip past it: "mid-" and
+    "die" on two lines become "middie", which no single word box contains and
+    the 600 dpi re-read therefore never sees.
+
+    This pass has neither limitation. It works on the finished text, and asks
+    one question of each word: is this a word neither printing uses, whose
+    confusable neighbour both of them use? "Middie" is not in the 1874 book;
+    "middle" is, 284 times. That is enough, and it is the same evidence the
+    article-level comparison would have used, just not tied to an article.
+
+    The scan's word has to be absent from the other printing entirely, not
+    merely rare in it. At a threshold of two occurrences this pass turned
+    "bills of exchange" into "hills of exchange" and "earnestly and
+    vigorously" into "rigorously": both are ordinary words that the 1874 book
+    happens to use exactly once.
+    """
+    counts = build_counts(entries)
+    model = EnglishShape({w: c for w, c in counts.items() if c >= COMMON})
+
+    fixes: list[BodyFix] = []
+    for word, count in counts.items():
+        if len(word) < MIN_LENGTH or word in trusted or lexicon.get(word, 0) >= 1:
+            continue
+        before = model.score(word)
+        best: tuple[float, str, int] | None = None
+        for candidate in _variants(word):
+            evidence = lexicon.get(candidate, 0)
+            if evidence < min_evidence:
+                continue
+            # The scan writing it this way repeatedly, and the other spelling
+            # hardly at all, is this edition's habit rather than a misread.
+            if count > 2 and counts.get(candidate, 0) < 5 * count:
+                continue
+            after = model.score(candidate)
+            # A smaller margin than the corpus-only pass uses, because the
+            # evidence here is much stronger: the other printing writes the
+            # replacement and does not write this word at all. The model is
+            # only here to stop a swap between two spellings that both look
+            # like English.
+            if after - before < margin:
+                continue
+            if best is None or evidence > best[2]:
+                best = (after, candidate, evidence)
+        if best is not None:
+            fixes.append(BodyFix(word, best[1], count, before, best[0]))
+    fixes.sort(key=lambda f: -f.occurrences)
+    return fixes
+
+
 def apply(entries: list[dict], fixes: list[BodyFix]) -> int:
     """Rewrite the body text, preserving each occurrence's capitalisation."""
     mapping = {fix.before: fix.after for fix in fixes}
@@ -309,6 +366,51 @@ def apply_splits(entries: list[dict], fixes: list[BodyFix]) -> int:
         body = entry.get("body", "")
         if body:
             entry["body"] = pattern.sub(replace, body)
+    return changed
+
+
+def apply_word_overrides(entries: list[dict], by_entry: dict) -> int:
+    """Replace whole words within one article.
+
+    Separate from apply_entry_overrides because that one matches a literal
+    substring, which is right for a phrase keyed to a headword and wrong for a
+    single word: "amo" would rewrite the middle of "among". Here the match is
+    anchored to word boundaries, every occurrence in the article is taken --
+    the word is one the book does not use, so each occurrence is the same
+    misread -- and the original capitalisation is kept.
+    """
+    changed = 0
+    for entry in entries:
+        pairs = by_entry.get(entry.get("headword", ""))
+        if not pairs:
+            continue
+        body = entry.get("body", "")
+        for before, after in pairs:
+            # Italic markers sit between characters, so the pattern tolerates
+            # them anywhere inside the word.
+            middle = "[\x02\x03]*".join(re.escape(c) for c in before)
+            pattern = re.compile(rf"(?<![A-Za-zÀ-ɏ]){middle}(?![A-Za-zÀ-ɏ])",
+                                 re.IGNORECASE)
+
+            def shaped(match: re.Match[str]) -> str:
+                raw = match.group(0)
+                found = re.sub(r"[\x02\x03]", "", raw)
+                if found.isupper() and len(found) > 1:
+                    word = after.upper()
+                elif found[:1].isupper():
+                    word = after[:1].upper() + after[1:]
+                else:
+                    word = after
+                # Any italic markers the word carried have to come back out,
+                # or the run they open is never closed and the rest of the
+                # article turns italic in the reader.
+                opens = "\x02" if "\x02" in raw else ""
+                closes = "\x03" if "\x03" in raw else ""
+                return f"{opens}{word}{closes}"
+
+            body, count = pattern.subn(shaped, body)
+            changed += count
+        entry["body"] = body
     return changed
 
 

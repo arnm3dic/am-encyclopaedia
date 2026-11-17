@@ -15,7 +15,7 @@
   gets it too, and the next visit has the update.
 */
 
-const VERSION = "am-7";
+const VERSION = "am-8";
 const CACHE = `am-encyclopaedia-${VERSION}`;
 
 // Paths are resolved against the worker's own scope, so they hold wherever

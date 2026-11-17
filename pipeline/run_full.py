@@ -21,6 +21,8 @@ import os
 import subprocess
 import sys
 import time
+from collections import Counter
+from functools import lru_cache
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -70,6 +72,24 @@ def ocr_one(args: tuple[str, int, str, str, bool]) -> dict:
     return record
 
 
+@lru_cache(maxsize=4)
+def _word_fixes(out_dir: str) -> dict[tuple[int, int, int], tuple[str, str]]:
+    """Corrections from the 600 dpi re-read, keyed by the word's own box.
+
+    They are applied to the page as it is parsed rather than to the cached OCR
+    output, which stays exactly as the first pass left it. That means a
+    correction reaches the headword, the cross-references and the search index
+    as well as the body text, and that deleting one file undoes all of it.
+    """
+    path = Path(out_dir) / "word_fixes.json"
+    if not path.exists():
+        return {}
+    out = {}
+    for fix in json.loads(path.read_text(encoding="utf-8")):
+        out[(fix["pdf_page"], fix["left"], fix["top"])] = (fix["was"], fix["now"])
+    return out
+
+
 def parse_one(path: Path) -> dict:
     """Stage 2: parse one cached page. Cheap, so it is re-run freely."""
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -78,6 +98,15 @@ def parse_one(path: Path) -> dict:
                 "failed": data["failed"], "entries": []}
 
     page = page_from_dict(data)
+
+    fixes = _word_fixes(str(path.parent.parent))
+    if fixes:
+        for word in page.words:
+            found = fixes.get((page.pdf_page, word.left, word.top))
+            # The `was` check means a stale correction file cannot silently
+            # rewrite a word it was never about.
+            if found and word.text == found[0]:
+                word.text = found[1]
     head = regions.find_running_head(page)
     region = regions.classify(page, head)
     entries = parse_page(page, head, region) if region == regions.REGION_MAIN else []
@@ -136,36 +165,68 @@ def interpolate_folios(records: list[dict]) -> int:
     faint one loses it (440 read as 44), and the unnumbered front matter picks
     up numbers from nowhere at all (1877 and up).
 
-    The offset between the printed and the PDF page number is locally constant
-    -- it drifts only where an unnumbered plate sits -- so the neighbours say
-    what a folio should be. Anything that disagrees with the local median by
-    more than a couple of pages is replaced, and missing ones are filled the
-    same way. Returns how many were corrected or filled.
+    The offset between the printed and the PDF page number is piecewise
+    constant: it slips by one at every unnumbered plate, and once, between PDF
+    pages 346 and 347, it jumps by twenty-eight, where the scan skips a stretch
+    the printing numbered. Within a run the neighbours say what a folio should
+    be.
+
+    Two things this has to get right, both learned the hard way.
+
+    The offsets are taken from a snapshot, never from the record being
+    rewritten. An earlier version read and wrote the same field as it walked
+    the book, so a repaired folio fed the next window, and a single bad patch
+    marched a constant error through hundreds of pages -- 363 of the 760 pages
+    that carry a legible folio ended up disagreeing with their own running
+    head, in runs with tidy deltas of -27, +3 and +15.
+
+    And the local offset is the commonest value in the window, not the median.
+    At the jump a window straddles two runs, and the median of two clusters
+    lands between them, on a value no page has; the mode takes whichever run
+    the page is actually in.
     """
     ordered = sorted((r for r in records if r.get("region") == regions.REGION_MAIN),
                      key=lambda r: r["pdf_page"])
     if not ordered:
         return 0
 
-    def local_offset(index: int, window: int = 25) -> int | None:
-        offsets = []
-        for other in ordered[max(0, index - window): index + window]:
-            folio = other.get("printed_page")
-            if isinstance(folio, int) and 1 <= folio <= 1200:
-                offsets.append(folio - other["pdf_page"])
-        if len(offsets) < 3:
-            return None
-        offsets.sort()
-        return offsets[len(offsets) // 2]
+    # The snapshot: what the running heads said, before anything is rewritten.
+    raw: list[int | None] = []
+    for record in ordered:
+        folio = record.get("printed_page")
+        raw.append(folio - record["pdf_page"]
+                   if isinstance(folio, int) and 1 <= folio <= 1200 else None)
+
+    window = 12
+    offsets: list[int | None] = []
+    for index in range(len(ordered)):
+        near = [o for o in raw[max(0, index - window): index + window + 1] if o is not None]
+        if not near:
+            offsets.append(None)
+            continue
+        counts = Counter(near).most_common()
+        offsets.append(counts[0][0] if counts[0][1] >= 3 else None)
+
+    # A gap with no agreeing neighbours borrows the nearest run's offset.
+    for index, offset in enumerate(offsets):
+        if offset is not None:
+            continue
+        for step in range(1, len(offsets)):
+            for probe in (index - step, index + step):
+                if 0 <= probe < len(offsets) and offsets[probe] is not None:
+                    offsets[index] = offsets[probe]
+                    break
+            if offsets[index] is not None:
+                break
 
     changed = 0
     for index, record in enumerate(ordered):
-        offset = local_offset(index)
+        offset = offsets[index]
         if offset is None:
             continue
         expected = record["pdf_page"] + offset
         folio = record.get("printed_page")
-        if isinstance(folio, int) and abs(folio - expected) <= 2 and 1 <= folio <= 1200:
+        if isinstance(folio, int) and abs(folio - expected) <= 1 and 1 <= folio <= 1200:
             continue
         record["printed_page"] = expected if expected >= 1 else None
         record["folio_repaired"] = True
@@ -300,6 +361,31 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
             body_count += body_text.apply_entry_overrides(
                 [e.__dict__ for e in entries],
                 json.loads(entry_overrides_path.read_text(encoding="utf-8")))
+
+        # The 1874 printing's vocabulary, used across the whole book: a word
+        # neither printing uses, whose confusable neighbour both do, is a
+        # misread. This catches what the article-by-article comparison cannot
+        # -- articles the 1914 revision added, and words the scan broke across
+        # a line and rejoined wrongly.
+        lexicon_path = Path("build/reference/lexicon1874.json")
+        if lexicon_path.exists():
+            lexicon = Counter(json.loads(lexicon_path.read_text(encoding="utf-8")))
+            trusted = set()
+            for entry in entries:
+                trusted.update(w.lower() for w in body_text.TOKEN.findall(entry.headword))
+            against = body_text.plan_against(
+                [e.__dict__ for e in entries], lexicon, trusted)
+            body_count += body_text.apply([e.__dict__ for e in entries], against)
+            body_plan = body_plan + against
+
+        # Corrections the 1874 printing attests to, scoped to the article they
+        # were found in. These come last among the word-level repairs so that
+        # a word the re-read already fixed is not reconsidered.
+        reference_path = out_dir / "reference_fixes.json"
+        if reference_path.exists():
+            by_entry = json.loads(reference_path.read_text(encoding="utf-8"))["by_entry"]
+            body_count += body_text.apply_word_overrides(
+                [e.__dict__ for e in entries], by_entry)
 
         split_plan = body_text.plan_splits(
             [e.__dict__ for e in entries], attested)
