@@ -1,14 +1,11 @@
 # macOS
 .DS_Store
-.AppleDouble
-.LSOverride
 ._*
 
 # Editors
 .vscode/
 .idea/
 *.swp
-*~
 
 # Python
 __pycache__/
@@ -16,11 +13,12 @@ __pycache__/
 .venv/
 venv/
 
-# Node (if a site build is added later)
+# Node
 node_modules/
 dist/
-.cache/
 
-# Local notes not meant for the repo
-scratch/
-*.local.md
+# Pipeline output: regenerable from the source PDF
+build/
+
+# The source scan is not committed - 56 MB, and not ours to redistribute here
+*.pdf

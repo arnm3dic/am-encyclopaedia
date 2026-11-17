@@ -1,77 +1,46 @@
 # AM Encyclopaedia
 
-Named for Albert Gallatin Mackey (1807–1881), whose *Encyclopædia of Freemasonry
-and Its Kindred Sciences* set the pattern this collection follows: a symbol per
-entry, traced to its sources.
+A searchable offline edition of Albert G. Mackey's *An Encyclopaedia of
+Freemasonry and Its Kindred Sciences* (revised edition, 1912), built as a
+progressive web app.
 
-A reference work on symbolic meanings: what things have stood for, where that
-association comes from, and how it shifts between cultures and periods.
+The source is a 946-page scan. Volume 1 carries a 2007 OCR layer that splices
+the two columns together mid-line; volume 2 carries none at all. Both are
+discarded: the pipeline re-OCRs every page.
 
-Each symbol is one Markdown file with structured frontmatter, so the collection
-stays readable as plain text, diffs cleanly in git, and can later be rendered as
-a website or queried as data without being rewritten.
-
-## Structure
+## Two codebases
 
 ```
-entries/
-  animals/      owl, raven, snake, lion, ...
-  plants/       olive, lotus, yew, rosemary, ...
-  colors/       red, white, purple, ...
-  numbers/      three, seven, twelve, ...
-  objects/      mirror, key, bridge, anchor, ...
-  celestial/    moon, north star, eclipse, ...
-  _TEMPLATE.md  copy this to start a new entry
-scripts/
-  validate.py   checks every entry's frontmatter and section order
+pipeline/   Python. Runs once on a desktop. PDF -> dictionary.db -> entries.json
+app/        The PWA. Ships the finished data; never parses a PDF.
 ```
 
-Categories are folders, not a fixed taxonomy — add one when a symbol genuinely
-doesn't fit the existing six.
+Extraction never runs on a user's device. The book is fixed, so deriving the
+text once means OCR errors are corrected in one place for everybody.
 
-## Adding an entry
+## How entries are found
+
+Mackey sets entries run-on: a headword starts mid-column and is marked only by
+being bold. OCR discards font weight, so the pipeline measures it from the
+image — the distance transform of each word's ink gives a stroke width, and
+body text measures 4.0 against a headword's 6.0.
+
+Alphabetical order is then an independent check on the result: a headword that
+breaks ordering is either a false positive or a misread, and every one is
+reported rather than silently kept.
+
+## Running the extraction spike
 
 ```bash
-cp entries/_TEMPLATE.md entries/animals/raven.md
-$EDITOR entries/animals/raven.md
-python3 scripts/validate.py
+python3 -I pipeline/run_spike.py path/to/source.pdf --out build/spike
 ```
 
-File names are lowercase and hyphenated (`north-star.md`), one symbol per file.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the entry conventions and what counts
-as a usable source.
-
-## Entry format
-
-Frontmatter carries the machine-readable fields:
-
-```yaml
----
-title: Owl
-slug: owl
-category: animals
-aliases: [owls, strix]
-domains: [wisdom, death, night]
-cultures: [greek, roman, celtic, japanese]
-status: draft
----
-```
-
-- `domains` — the meanings themselves, as lowercase single words or short phrases
-- `cultures` — traditions the entry actually documents, not every place the symbol appears
-- `status` — `draft` until sourced and read back, then `reviewed`
-
-The body then runs: summary, core meanings, by tradition, inversions and
-tensions, related entries, sources. `scripts/validate.py` enforces that order.
-
-## Conventions
-
-Claims about a specific tradition get a source. Where traditions disagree the
-entry says so rather than averaging them into a single meaning — the
-disagreement is usually the interesting part. Modern commercial or New Age
-associations are labelled as such and not blended with older attestations.
+Writes `entries.json`, `issues.json`, `report.txt` and the page images.
+Requires `tesseract`, `poppler-utils`, and Python with `numpy`, `scipy`,
+`pillow`.
 
 ## Status
 
-Early. The two entries in `entries/` are worked examples of the format, not a
-sample of finished quality.
+Phase 1 complete: 30-page spike, 136 entries, 13 flagged issues, two pages
+hand-verified at 100% headword accuracy. See the plan document for the full
+roadmap.
