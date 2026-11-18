@@ -92,3 +92,31 @@ test("the icons are small enough to ship", () => {
   assert.ok(kb("img/icon-192.png") < 120, "the cached icon has got heavy");
   assert.ok(kb("img/icon-512.png") < 600, "the install icon has got heavy");
 });
+
+test("no article in the bundle is left with nothing to show", () => {
+  // Twelve headwords survived the scan with no text under them. They are
+  // allowed to exist -- deleting a heading the book prints would be worse --
+  // but the reader must be told, not handed a blank page.
+  const bundle = JSON.parse(read("public/data/entries.json"));
+  const blank = Object.values(bundle.entries as Record<string, unknown[]>)
+    .filter((row) => !String(row[1]).trim());
+  assert.ok(blank.length < 25, `${blank.length} articles have no text at all`);
+
+  const app = read("src/ui/app.ts");
+  assert.match(app, /was not recovered from the scan/,
+    "renderEntry has no message for an article with no body");
+});
+
+test("the front matter is not parsed as articles", () => {
+  const bundle = JSON.parse(read("public/data/entries.json"));
+  const rows = Object.values(bundle.entries as Record<string, [string, string, number]>);
+  // The prefaces carry no folio; an entry on page 0 means one of them was
+  // read as an article, which is how the letter A ended up filed under a
+  // line from the publishers' note.
+  const unnumbered = rows.filter((row) => row[2] === 0);
+  assert.equal(unnumbered.length, 0, "an unnumbered front-matter page produced an entry");
+
+  const first = rows.find((row) => row[0] === "A.");
+  assert.ok(first, "the article on the letter A is missing");
+  assert.equal(first![2], 1, "the letter A should be on printed page 1");
+});

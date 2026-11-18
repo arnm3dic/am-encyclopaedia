@@ -528,8 +528,18 @@ function renderEntry(id: number, query: string): HTMLElement {
 
   const body = element("div", { class: "entry-body" });
   const terms = query && !query.startsWith("letter:") ? query : "";
-  for (const paragraph of splitParagraphs(entry.body)) {
-    body.append(renderParagraph(paragraph, terms));
+  if (entry.body.trim()) {
+    for (const paragraph of splitParagraphs(entry.body)) {
+      body.append(renderParagraph(paragraph, terms));
+    }
+  } else {
+    // A dozen headwords came through the scan with no text under them. A
+    // blank page reads as a broken app; saying so, and saying where to look
+    // instead, reads as a book with a gap in it, which is what this is.
+    body.append(element("p", { class: "empty" },
+      entry.printedPage
+        ? `The text of this article was not recovered from the scan. It is on page ${entry.printedPage} of the printed edition.`
+        : "The text of this article was not recovered from the scan."));
   }
   article.append(body);
 

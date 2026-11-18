@@ -22,10 +22,13 @@ from dataclasses import dataclass
 
 from ..extract.ocr import Page, Word
 
+FRONT_MARKERS = ("PREFACE", "PUBLISHERS' NOTE", "PUBLISHERS\u2019 NOTE",
+                 "LIST OF ILLUSTRATIONS")
 PRONOUNCING_MARKERS = ("PRONOUNCING", "PRONUNCIATION", "NOTATIONS")
 BIBLIOGRAPHY_MARKERS = ("BIBLIOGRAPHY",)
 
 REGION_MAIN = "main"
+REGION_FRONT = "front"
 REGION_PRONOUNCING = "pronouncing"
 REGION_BIBLIOGRAPHY = "bibliography"
 REGION_PLATE = "plate"
@@ -111,6 +114,13 @@ def classify(page: Page, head: RunningHead) -> str:
         if any(marker in head_text for marker in markers):
             return True
         return any(marker in body_text for marker in markers)
+
+    # The prefaces carry a running head but no Arabic folio, and read as
+    # ordinary prose, so they were parsed as articles: the publishers' note
+    # gave its last line as a headword and the article on the letter A, which
+    # begins on the page after it, was filed under "T. M. H. Co."
+    if head.printed_page is None and any(m in head_text for m in FRONT_MARKERS):
+        return REGION_FRONT
 
     if seen(BIBLIOGRAPHY_MARKERS):
         return REGION_BIBLIOGRAPHY

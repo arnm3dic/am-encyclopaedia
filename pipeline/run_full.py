@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -127,6 +128,9 @@ def parse_one(path: Path) -> dict:
     }
 
 
+LEADING_HEADWORD = re.compile(r"^(?P<head>[A-Z][^.\n]{0,44}\.)\s+(?P<rest>\S.*)$", re.DOTALL)
+
+
 def stitch(records: list[dict]) -> list[Entry]:
     """Join continuations onto the entry they belong to.
 
@@ -147,7 +151,18 @@ def stitch(records: list[dict]) -> list[Entry]:
                     previous.body = f"{previous.body} {raw['body']}".strip()
                     if raw["pdf_page"] != previous.pdf_page and "spans_pages" not in previous.issues:
                         previous.issues.append("spans_pages")
-                continue
+                    continue
+                # Nothing to attach to, but the text may carry its own
+                # headword. The book's first article is the letter A, whose
+                # headword is a single letter and so is not recognised as
+                # one; dropping the continuation lost the article outright,
+                # and attaching it to whatever came before it on the previous
+                # page filed it under a line from the publishers' note.
+                found = LEADING_HEADWORD.match(raw["body"].strip()) if raw["body"] else None
+                if not found:
+                    continue
+                raw = dict(raw, headword=found.group("head").strip(),
+                           body=found.group("rest").strip())
             entries.append(Entry(
                 headword=raw["headword"], body=raw["body"], pdf_page=raw["pdf_page"],
                 printed_page=raw["printed_page"], region=raw["region"],
@@ -275,6 +290,133 @@ def merge_false_splits(entries: list) -> int:
         previous_key = key
     entries[:] = keep
     return merged
+
+
+def rejoin_orphaned_bodies(entries: list, entry_starts: set[str]) -> int:
+    """Put an article back together when its headword and its text were split.
+
+    "Octagon." came out with no text at all, and the entry after it had no
+    headword worth the name -- "of eight equal sides and angles" -- carrying
+    Octagon's article. One article, read as two halves, and neither half any
+    use: the reader searching for Octagon finds a blank page, and the text
+    is filed under a phrase nobody would ever look up.
+
+    There are three ways the halves present themselves, and the second and
+    third were only visible once the first was fixed:
+
+      the next headword is not a headword  -- "of eight equal sides"
+      the next headword is the same one    -- Triple., then Triple. again
+      the two headwords are one headword   -- "Penal." then "Sign.", which
+                                              the book prints as "Penal Sign."
+
+    The third is a guess unless something confirms it, so it is only made when
+    the other printing has an article under the joined name.
+    """
+    from pipeline.parse.normalise import sort_key
+
+    joined = 0
+    keep: list = []
+    for entry in entries:
+        previous = keep[-1] if keep else None
+        if previous is None or previous.body.strip():
+            keep.append(entry)
+            continue
+
+        if entry.headword[:1].islower():
+            previous.body = f"{entry.headword} {entry.body}".strip()
+        elif sort_key(previous.headword) == sort_key(entry.headword):
+            previous.body = entry.body
+        else:
+            combined = f"{previous.headword.rstrip('.').strip()} {entry.headword}".strip()
+            if sort_key(combined) not in entry_starts:
+                keep.append(entry)
+                continue
+            previous.headword = combined
+            previous.body = entry.body
+        joined += 1
+    entries[:] = keep
+    return joined
+
+
+def reference_entry_starts(path: Path) -> set[str]:
+    """Headwords the other printing begins an article with.
+
+    Used to confirm a guess rather than to make one: "Penal." and "Sign."
+    become "Penal Sign." only because the other copy has an article under
+    that name. Matching is case-sensitive and anchored to a sentence end,
+    since in running text the same words appear in lower case.
+    """
+    from pipeline.parse.normalise import sort_key
+
+    if not path.exists():
+        return set()
+    text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8", errors="replace"))
+    found = set()
+    for match in re.finditer(
+            r"(?:^|[.;:\"”]\s)([A-Z][A-Za-z'’]+(?:[ ,-][A-Za-z'’.]+){0,4})\.\s+[A-Z(“\"]",
+            text):
+        found.add(sort_key(match.group(1) + "."))
+    return found
+
+
+SEE_IN_HEADWORD = re.compile(
+    r"^(?P<head>.{3,}?[^.\s])\.?\s+(?P<see>\(?[Ss]ee\b.*)$", re.DOTALL)
+
+
+def split_see_from_headword(entries: list) -> int:
+    """Move a cross-reference that was read as part of the headword.
+
+    Some articles are nothing but a pointer: "Andrew, Grand Scottish Knight
+    of St. See Knight of St. Andrew." The bold run and the pointer sit on the
+    same line, the headword swallowed both, and what is left is an entry with
+    a sentence for a title and nothing to read. Only entries with no body at
+    all are touched, so an article that merely mentions a cross-reference in
+    its first line is not cut in half.
+    """
+    moved = 0
+    for entry in entries:
+        if entry.body.strip():
+            continue
+        found = SEE_IN_HEADWORD.match(entry.headword.strip())
+        if not found:
+            continue
+        head = found.group("head").strip()
+        if not head.endswith("."):
+            head += "."
+        entry.headword = head
+        entry.body = found.group("see").strip()
+        moved += 1
+    return moved
+
+
+
+
+def rescue_front_matter(entries: list) -> int:
+    """Recover an article that the front matter stole the headword from.
+
+    The first article in the book, on the letter A, was filed under "T. M. H.
+    Co." -- a fragment of the publisher's line on the title page. The page it
+    starts on carries no running head, so it is not recognised as a numbered
+    page, and the headword came from the wrong side of the join.
+
+    Where such an entry's own text begins with something shaped like a
+    headword, that is the headword, and it is taken back. Where it does not --
+    the preface, which is not an article at all -- the entry is left alone and
+    flagged, because inventing a title for it would be worse than leaving it
+    visibly odd.
+    """
+    rescued = 0
+    for entry in entries:
+        if entry.printed_page not in (0, None):
+            continue
+        found = LEADING_HEADWORD.match(entry.body.strip())
+        if found:
+            entry.headword = found.group("head").strip()
+            entry.body = found.group("rest").strip()
+            rescued += 1
+        else:
+            entry.needs_review = True
+    return rescued
 
 
 def drop_false_headwords(entries: list) -> list:
@@ -428,10 +570,19 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
     dropped = 0
     merged = 0
     if correct:
+        # Put split articles back together before anything is judged on
+        # having an empty body: Octagon has no text until its other half is
+        # returned to it, and would be thrown away as a phantom headword.
+        starts = reference_entry_starts(Path("build/reference/mackey1914.txt"))
+        rejoined = rejoin_orphaned_bodies(entries, starts)
+        moved = split_see_from_headword(entries)
+        rescued = rescue_front_matter(entries)
         before = len(entries)
         entries = drop_false_headwords(entries)
         dropped = before - len(entries)
         merged = merge_false_splits(entries)
+        print(f"  rejoined {rejoined} split articles, moved {moved} cross-references "
+              f"out of headwords, rescued {rescued} from the front matter")
 
     issues = checks.check(entries)
     summary = checks.summarise(entries, issues)
