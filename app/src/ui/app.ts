@@ -13,6 +13,7 @@
 import { loadDictionary } from "../core/data/load.ts";
 import { stripMarkers } from "../core/normalise.ts";
 import * as reading from "./reading.ts";
+import * as gate from "./gate.ts";
 // Named `recents` because `history` is already the navigation stack here.
 import * as recents from "./history.ts";
 import type { Dictionary, Result, Meta } from "../core/search/engine.ts";
@@ -791,7 +792,12 @@ function element(
 
 async function start(): Promise<void> {
   try {
-    const loaded = await loadDictionary();
+    // The book loads while the door is shut, so answering opens it at once
+    // instead of starting a five-megabyte wait at that moment.
+    const loading = loadDictionary();
+    await new Promise<void>((open) => gate.guard(root, open));
+
+    const loaded = await loading;
     dictionary = loaded.dictionary;
     meta = loaded.meta;
     buildSearchBar();

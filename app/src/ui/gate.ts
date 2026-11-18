@@ -1,0 +1,189 @@
+/**
+ * The door.
+ *
+ * A challenge before the book opens: "Who comes here?", answered with a word.
+ *
+ * It is worth being plain about what this is and is not. The application is a
+ * static site, so this file is downloaded by whoever asks for it, and the
+ * whole encyclopaedia sits beside it in data/entries.json, reachable by
+ * typing its address. Anyone who wants the text without answering can have
+ * it. This is a doorkeeper's question, not a lock: it sets the manner of
+ * entry, and it keeps the book from opening by accident in front of someone
+ * it was not meant for.
+ *
+ * Because of that the word is not in the source in plain sight. What is
+ * stored is a digest of it, which is obscurity rather than security -- a
+ * short word can be found by trying words against the digest -- but it does
+ * mean the answer is not sitting in the repository to be read at a glance.
+ *
+ * Four wrong answers close the door for twenty seconds. The count and the
+ * closing time are kept in storage, so reloading the page does not reopen it.
+ */
+
+const ATTEMPTS_KEY = "am-door-tries";
+const UNTIL_KEY = "am-door-until";
+
+const LIMIT = 4;
+const WAIT_MS = 20_000;
+
+/** The expected answer, as a digest. See the note above on what that is for. */
+const EXPECTED = "664aac84-3b1ee9e4";
+
+/**
+ * A small, stable digest. Deliberately not Web Crypto: subtle.crypto needs a
+ * secure context, and the one-file copy of this application is opened from a
+ * folder, where there is none. A cryptographic hash would buy nothing here
+ * anyway, for the reasons in the note above.
+ */
+export function digest(word: string): string {
+  const salted = `tyler:${word}:1914`;
+  let a = 0x811c9dc5;
+  let b = 0x01000193;
+  for (let i = 0; i < salted.length; i++) {
+    const code = salted.charCodeAt(i);
+    a = Math.imul(a ^ code, 0x01000193) >>> 0;
+    b = Math.imul(b + code + i, 0x85ebca6b) >>> 0;
+    b = ((b << 13) | (b >>> 19)) >>> 0;
+  }
+  return `${a.toString(16).padStart(8, "0")}-${b.toString(16).padStart(8, "0")}`;
+}
+
+export function admits(word: string): boolean {
+  return digest(word.trim()) === EXPECTED;
+}
+
+/* ---------- how many have been turned away ---------- */
+
+function read(key: string): number {
+  try {
+    return Number(localStorage.getItem(key)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function write(key: string, value: number): void {
+  try {
+    localStorage.setItem(key, String(value));
+  } catch {
+    /* A door that cannot remember is still a door. */
+  }
+}
+
+/** Milliseconds left to wait, or 0. */
+export function closedFor(now = Date.now()): number {
+  return Math.max(0, read(UNTIL_KEY) - now);
+}
+
+/** Record a wrong answer; returns the wait it earned, in milliseconds. */
+export function refuse(now = Date.now()): number {
+  const tries = read(ATTEMPTS_KEY) + 1;
+  if (tries < LIMIT) {
+    write(ATTEMPTS_KEY, tries);
+    return 0;
+  }
+  write(ATTEMPTS_KEY, 0);
+  write(UNTIL_KEY, now + WAIT_MS);
+  return WAIT_MS;
+}
+
+export function admitted(): void {
+  write(ATTEMPTS_KEY, 0);
+  write(UNTIL_KEY, 0);
+}
+
+export function triesLeft(): number {
+  return Math.max(0, LIMIT - read(ATTEMPTS_KEY));
+}
+
+/* ---------- the door itself ---------- */
+
+/**
+ * Show the challenge. `onOpen` is called once the word is right.
+ *
+ * The book is loading behind this, so answering correctly opens it at once
+ * rather than starting the wait then.
+ */
+export function guard(root: HTMLElement, onOpen: () => void): void {
+  const make = (tag: string, cls?: string, text?: string): HTMLElement => {
+    const node = document.createElement(tag);
+    if (cls) node.setAttribute("class", cls);
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+
+  document.body.classList.add("shut");
+  const panel = make("div", "door");
+  const challenge = make("p", "challenge", "Who comes here?");
+
+  const form = make("form", "door-form");
+  const label = make("label", "visually-hidden", "The word");
+  label.setAttribute("for", "door-word");
+  const field = make("input", "door-word") as HTMLInputElement;
+  field.setAttribute("id", "door-word");
+  field.setAttribute("type", "password");
+  field.setAttribute("autocomplete", "off");
+  field.setAttribute("autocapitalize", "none");
+  field.setAttribute("spellcheck", "false");
+  field.setAttribute("aria-describedby", "door-note");
+
+  const enter = make("button", "door-enter sans", "Enter");
+  enter.setAttribute("type", "submit");
+
+  const note = make("p", "door-note sans");
+  note.setAttribute("id", "door-note");
+  note.setAttribute("role", "status");
+
+  form.append(label, field, enter);
+  panel.append(challenge, form, note);
+  root.replaceChildren(panel);
+  field.focus();
+
+  let ticking: ReturnType<typeof setInterval> | undefined;
+
+  const closeFor = (ms: number): void => {
+    field.disabled = true;
+    enter.disabled = true;
+    const until = Date.now() + ms;
+    const tick = (): void => {
+      const left = Math.ceil((until - Date.now()) / 1000);
+      if (left > 0) {
+        note.textContent = `The door is closed. ${left} second${left === 1 ? "" : "s"}.`;
+        return;
+      }
+      if (ticking) clearInterval(ticking);
+      field.disabled = false;
+      enter.disabled = false;
+      note.textContent = "";
+      field.focus();
+    };
+    tick();
+    ticking = setInterval(tick, 250);
+  };
+
+  const waiting = closedFor();
+  if (waiting > 0) closeFor(waiting);
+
+  form.addEventListener("submit", (event: Event) => {
+    event.preventDefault();
+    if (field.disabled) return;
+    if (admits(field.value)) {
+      admitted();
+      if (ticking) clearInterval(ticking);
+      document.body.classList.remove("shut");
+      onOpen();
+      return;
+    }
+    field.value = "";
+    const wait = refuse();
+    if (wait > 0) {
+      closeFor(wait);
+    } else {
+      const left = triesLeft();
+      note.textContent = left === 1
+        ? "Not the word. One more attempt."
+        : `Not the word. ${left} attempts remain.`;
+      field.focus();
+    }
+  });
+}

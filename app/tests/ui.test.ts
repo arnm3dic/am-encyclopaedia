@@ -125,6 +125,10 @@ class StubNode {
       (fn as (e: unknown) => void)(payload);
     }
   }
+  replaceChildren(...nodes: StubNode[]): void {
+    this.children = [];
+    for (const node of nodes) this.append(node);
+  }
   remove(): void {
     const siblings = this.parentElement?.children;
     if (siblings) siblings.splice(siblings.indexOf(this), 1);
@@ -252,6 +256,44 @@ const requested: string[] = [];
 await import("../src/ui/app.ts");
 // Let the module's own async start() settle.
 await new Promise((resolve) => setTimeout(resolve, 2500));
+
+/* ---------- answer the door ---------- */
+
+// Every screen below is behind the challenge, so these run first and the
+// rest of the file is what a reader sees once it is answered.
+const doorForm = app.find("door-form")[0];
+const doorWord = app.find("door-word")[0];
+
+test("the book is shut until the word is given", () => {
+  assert.ok(doorForm, "no challenge on opening");
+  assert.equal(app.find("challenge")[0]?.textContent, "Who comes here?");
+  assert.ok(bodyNode.classList.contains("shut"), "the masthead is not hidden");
+  assert.equal(app.find("cover").length, 0, "the book showed before the word");
+});
+
+test("a wrong word is refused, and the fourth closes the door", () => {
+  for (let i = 1; i <= 3; i++) {
+    doorWord.value = "wrong";
+    doorForm.dispatch("submit", { preventDefault() {} });
+    assert.equal(app.find("cover").length, 0, "a wrong word opened the book");
+    assert.match(app.find("door-note")[0].textContent, /Not the word/);
+  }
+  doorWord.value = "wrong";
+  doorForm.dispatch("submit", { preventDefault() {} });
+  assert.match(app.find("door-note")[0].textContent, /closed\. 20 seconds/);
+  assert.ok(doorWord.disabled, "the field is still live while the door is shut");
+});
+
+test("the word opens it", async () => {
+  // The wait is real, so it is cleared here rather than waited out.
+  localStorage.removeItem("am-door-until");
+  doorWord.disabled = false;
+  doorWord.value = "LOTG#102";
+  doorForm.dispatch("submit", { preventDefault() {} });
+  await new Promise((resolve) => setTimeout(resolve, 2500));
+  assert.ok(!bodyNode.classList.contains("shut"), "the masthead stayed hidden");
+  assert.ok(app.find("cover").length === 1, "the book did not open");
+});
 
 /* ---------- tests ---------- */
 

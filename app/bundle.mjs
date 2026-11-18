@@ -33,8 +33,24 @@ const MODULES = [
   "core/data/load.js",
   "ui/reading.js",
   "ui/history.js",
+  "ui/gate.js",
   "ui/app.js",
 ];
+
+// Adding a module to the application and forgetting it here produces a page
+// that throws on load with a name nobody will recognise, and only when
+// someone opens the file. Better to fail the build.
+{
+  const { readdirSync } = await import("node:fs");
+  const walk = (dir) => readdirSync(DIST + dir, { withFileTypes: true })
+    .flatMap((e) => e.isDirectory() ? walk(dir + e.name + "/")
+                  : e.name.endsWith(".js") ? [dir + e.name] : []);
+  const built = walk("").filter((f) => f !== "sw.js");
+  const missing = built.filter((f) => !MODULES.includes(f));
+  if (missing.length) {
+    throw new Error(`bundle.mjs does not list: ${missing.join(", ")}`);
+  }
+}
 
 const nameOf = (path) => "M_" + path.replace(/[./]/g, "_");
 

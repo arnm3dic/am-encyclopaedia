@@ -770,3 +770,83 @@ body.reading .pagebar { top: 0; }
   from { transform: translateY(6px); opacity: 0; }
   to   { transform: none; opacity: 1; }
 }
+
+/* ---------- the door ---------- */
+
+/* Nothing of the book shows until the word is given: no wordmark, no search
+   bar, no reading options for a book that is not open. */
+body.shut .masthead,
+body.shut .searchbar { display: none; }
+
+.door {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 5rem 1.25rem 3rem;
+  text-align: center;
+}
+
+/*
+  Blackletter where the reader has it -- Old English Text MT ships with
+  Microsoft Office on both Mac and Windows, which is most people -- and an
+  italic serif where they do not. No webfont: this application works offline
+  from first load, and a face downloaded for four words is not worth the
+  weight or the licence.
+*/
+.challenge {
+  margin: 0 0 2.25rem;
+  font-family: "Old English Text MT", "Engravers Old English BT",
+    "Cloister Black", UnifrakturMaguntia, Blackadder ITC, var(--serif);
+  font-style: italic;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+}
+
+.door-form {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.door-word {
+  width: min(13rem, 55vw);
+  padding: 0.5rem 0.65rem;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1rem;
+  text-align: center;
+  letter-spacing: 0.35em;
+}
+.door-word:focus { outline: 2px solid var(--craft); outline-offset: 1px; }
+.door-word:disabled { opacity: 0.45; }
+
+.door-enter {
+  padding: 0.5rem 1rem;
+  background: none;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.door-enter:hover:not(:disabled) { background: var(--paper-sunk); }
+.door-enter:disabled { opacity: 0.45; cursor: default; }
+
+.door-note {
+  min-height: 1.4rem;
+  margin: 1.1rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
