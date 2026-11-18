@@ -35,7 +35,7 @@ os.environ.setdefault("OMP_THREAD_LIMIT", "1")
 
 from pipeline.extract.ocr import (ExtractionError, page_from_dict, page_to_dict,
                                   read_page)
-from pipeline.corrections import body_text, ocr_fixes, triage
+from pipeline.corrections import body_text, passages, reference, ocr_fixes, triage
 from pipeline.parse import regions
 from pipeline.parse.entries import Entry, parse_page
 from pipeline.validate import checks
@@ -386,6 +386,24 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
                 [e.__dict__ for e in entries], lexicon, trusted)
             body_count += body_text.apply_joins([e.__dict__ for e in entries], joins)
             body_plan = body_plan + joins
+
+            ref_path = Path("build/reference/mackey1914.txt")
+            ref_text = reference.load(ref_path) if ref_path.exists() else None
+            trusted_all = reference.trusted_vocabulary([e.__dict__ for e in entries])
+
+            # Passages the scan mangled past repairing a word at a time --
+            # lines run together, words merged and lost -- taken from the
+            # same edition's text, after every word-level repair has had its
+            # chance at them.
+            if ref_text is not None:
+                repairs = passages.plan(
+                    [e.__dict__ for e in entries], ref_text, trusted_all,
+                    passages.build_model([e.__dict__ for e in entries]))
+                body_count += passages.apply([e.__dict__ for e in entries], repairs)
+                (out_dir / "passage_repairs.json").write_text(
+                    json.dumps([r.as_dict() for r in repairs],
+                               ensure_ascii=False, indent=1), encoding="utf-8")
+                print(f"  passages repaired from the other copy: {len(repairs)}")
 
         # Corrections the 1874 printing attests to, scoped to the article they
         # were found in. These come last among the word-level repairs so that

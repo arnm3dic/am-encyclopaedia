@@ -115,7 +115,10 @@ class Reference:
 
     def __init__(self, text: str):
         self.flat = flatten(text)
-        self.words = words_of(self.flat)
+        # Both spellings of every word: folded for matching, and as the page
+        # has it, so a passage taken from this copy keeps its capitals.
+        self.raw = [m.group(0) for m in WORD.finditer(self.flat)]
+        self.words = [w.lower() for w in self.raw]
         self.counts = Counter(self.words)
         self.index: dict[tuple[str, ...], list[int]] = {}
         key_length = MIN_ANCHOR
