@@ -1,8 +1,32 @@
 # AM Encyclopaedia
 
 A searchable offline edition of Albert G. Mackey's *An Encyclopaedia of
-Freemasonry and Its Kindred Sciences* (revised edition, 1912), built as a
-progressive web app.
+Freemasonry and Its Kindred Sciences* (new and revised edition, 1914), built
+as a progressive web app.
+
+Compiled for the Brethren's reference by Arnie T. Free for education and
+private study; not to be sold. See the About panel in the app for the full
+terms.
+
+## Publishing it
+
+`docs/` is the built site, and GitHub Pages serves it straight from the
+repository:
+
+    Settings -> Pages -> Source: Deploy from a branch
+                      -> Branch: main, folder: /docs
+
+The address is then `https://<user>.github.io/<repo>/`. Everything in the app
+resolves relatively -- the manifest's `start_url` and `scope` are `.`, the
+data is fetched from the module's own URL, and the service worker registers
+at `sw.js` -- so it works from a subpath with no changes.
+
+`docs/` is committed rather than built on a runner. The data is produced by
+the Python pipeline from a 58 MB scan that is not in this repository, so
+there is nothing a build step could regenerate it from.
+
+Rebuild it with `node app/build.mjs`, which writes `app/dist/` and copies it
+to `docs/`.
 
 The source is a 946-page scan. Volume 1 carries a 2007 OCR layer that splices
 the two columns together mid-line; volume 2 carries none at all. Both are
