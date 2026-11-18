@@ -1,0 +1,60 @@
+{
+  "source_title": "An Encyclopaedia of Freemasonry and Its Kindred Sciences",
+  "source_author": "Albert G. Mackey",
+  "source_edition": "New and revised edition, prepared by William J. Hughan and Edward L. Hawkins; The Masonic History Company, 1914 (latest copyright 1912)",
+  "source_pages": "946",
+  "entries": "3911",
+  "extraction_mean_confidence": "91.8",
+  "cross_refs": "839",
+  "cross_refs_resolved": "494",
+  "schema_version": "1",
+  "letter_counts": {
+    "A": 396,
+    "B": 213,
+    "C": 366,
+    "D": 173,
+    "E": 249,
+    "F": 131,
+    "G": 145,
+    "H": 100,
+    "I": 38,
+    "J": 96,
+    "K": 195,
+    "L": 210,
+    "M": 283,
+    "N": 63,
+    "O": 90,
+    "P": 290,
+    "Q": 11,
+    "R": 158,
+    "S": 321,
+    "T": 182,
+    "U": 26,
+    "V": 38,
+    "W": 78,
+    "X": 5,
+    "Y": 23,
+    "Z": 31
+  },
+  "schema": {
+    "headwords": [
+      "id",
+      "headword",
+      "plain",
+      "letter",
+      "printed_page"
+    ],
+    "entries": [
+      "headword",
+      "body",
+      "printed_page",
+      "pdf_page",
+      "needs_review"
+    ],
+    "crossrefs": [
+      "to_entry",
+      "raw_target",
+      "kind"
+    ]
+  }
+}

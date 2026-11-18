@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AM Encyclopaedia">
+  <rect width="64" height="64" fill="#1f3a93"/>
+  <rect x="14" y="17" width="36" height="1.6" fill="#f3f2ee"/>
+  <rect x="14" y="45.4" width="36" height="1.6" fill="#f3f2ee"/>
+  <text x="32.7" y="39" text-anchor="middle" fill="#f3f2ee"
+        font-family="Iowan Old Style, Palatino, Georgia, serif"
+        font-size="21" font-weight="600" letter-spacing="1.4">AM</text>
+</svg>

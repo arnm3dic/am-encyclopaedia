@@ -73,9 +73,26 @@ async function main() {
   }
 
   console.log(`built ${compiled} modules, copied ${copied} files -> ${relative(process.cwd(), DIST)}`);
+
+  // A second copy under docs/, which is what GitHub Pages serves. The built
+  // site has to be committed: the data comes from the Python pipeline, which
+  // needs a 58 MB scan that is not in the repository, so no build step on a
+  // runner could regenerate it.
+  //
+  // Inside main, not after it: main is called without being awaited, so a
+  // copy written at the top level of this module ran before the build had
+  // created anything to copy.
+  const docs = fileURLToPath(new URL("../docs", import.meta.url));
+  await rm(docs, { recursive: true, force: true });
+  await cp(DIST, docs, { recursive: true });
+  // Without this, GitHub Pages runs the files through Jekyll, which drops
+  // anything whose name begins with an underscore.
+  await writeFile(join(docs, ".nojekyll"), "");
+  console.log(`copied ${relative(process.cwd(), DIST)} -> docs for GitHub Pages`);
 }
 
 main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
+

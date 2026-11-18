@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mackey's Encyclopaedia of Freemasonry</title>
+<meta name="description" content="Albert G. Mackey's Encyclopaedia of Freemasonry (1912), searchable offline.">
+<meta name="theme-color" content="#f3f2ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15161b" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
+<!-- iOS composites transparency onto black, so its icon has the paper behind it. -->
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="stylesheet" href="ui/styles.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <button id="back" class="back sans" type="button" hidden>&larr; Back</button>
+    <span class="pavement" aria-hidden="true"></span>
+    <p class="wordmark">Mackey's Encyclopaedia <span>of Freemasonry</span></p>
+    <button id="typeset" class="typeset sans" type="button"
+            aria-label="Reading options" aria-expanded="false">Aa</button>
+  </div>
+</header>
+<div id="searchbar" class="searchbar"></div>
+<main id="app"><div class="loading">Opening the encyclopaedia&hellip;</div></main>
+<script type="module" src="ui/app.js"></script>
+</body>
+</html>

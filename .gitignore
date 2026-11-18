@@ -32,3 +32,6 @@ app/dist/
 # Reference texts from the Internet Archive: 11 MB together, re-downloadable
 build/reference/mackey1874.txt
 build/reference/mackey1914.txt
+
+# docs/ is the built site that GitHub Pages serves, so it is committed
+!docs/

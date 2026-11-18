@@ -1,0 +1,772 @@
+/*
+  AM Encyclopaedia.
+
+  Letterpress has no shadows and no rounded cards, so neither does this: the
+  structure is rules, measure and space. Blue is the Craft's own colour and is
+  reserved for things you can act on, so anything blue is interactive and
+  nothing interactive is anything else.
+
+  Type is from the system. A reading app that must work offline should not wait
+  on a font download, and the old-style faces already installed -- Iowan,
+  Palatino, Charter -- suit a 1912 reference work better than a webfont would.
+*/
+
+:root {
+  --paper: #f3f2ee;
+  --paper-sunk: #eceae4;
+  --ink: #191916;
+  --ink-soft: #5d5c55;
+  --ink-faint: #8d8b82;
+  --rule: #d8d6ce;
+  --rule-strong: #b9b6ab;
+  --craft: #1f3a93;
+  --craft-soft: #e3e7f6;
+  --mark: #fff0b8;
+
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+    Charter, Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --measure: 34rem;
+  --step: 0.5rem;
+}
+
+/*
+  Dark is available three ways: follow the system, or be forced either way.
+  The variables live on body rather than :root so a class can override them;
+  the media query is scoped so an explicit light choice still wins at night.
+*/
+@media (prefers-color-scheme: dark) {
+  body:not(.theme-light) {
+    --paper: #15161b;
+    --paper-sunk: #1b1d23;
+    --ink: #e7e5de;
+    --ink-soft: #a3a198;
+    --ink-faint: #76746c;
+    --rule: #2b2d35;
+    --rule-strong: #3d404a;
+    --craft: #8fa8f0;
+    --craft-soft: #1e2436;
+    --mark: #4a4220;
+  }
+}
+
+body.theme-dark {
+  --paper: #15161b;
+  --paper-sunk: #1b1d23;
+  --ink: #e7e5de;
+  --ink-soft: #a3a198;
+  --ink-faint: #76746c;
+  --rule: #2b2d35;
+  --rule-strong: #3d404a;
+  --craft: #8fa8f0;
+  --craft-soft: #1e2436;
+  --mark: #4a4220;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+}
+
+/* Chrome is sans; the book's own words are serif. */
+button, input, .sans { font-family: var(--sans); }
+
+a { color: var(--craft); text-underline-offset: 0.15em; }
+
+:focus-visible {
+  outline: 2px solid var(--craft);
+  outline-offset: 2px;
+}
+
+.wrap {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+
+.masthead-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+}
+
+.back {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--craft);
+  font-size: 0.9375rem;
+  padding: 0.5rem 0.25rem 0.5rem 0;
+  cursor: pointer;
+}
+.back[hidden] { display: none; }
+
+.wordmark {
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+.wordmark span { color: var(--ink-faint); font-weight: 400; }
+
+/* The tessellated pavement, small and once. */
+.pavement {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+  background-image:
+    linear-gradient(45deg, var(--ink) 25%, transparent 25%, transparent 75%, var(--ink) 75%),
+    linear-gradient(45deg, var(--ink) 25%, transparent 25%, transparent 75%, var(--ink) 75%);
+  background-size: 0.5625rem 0.5625rem;
+  background-position: 0 0, 0.28125rem 0.28125rem;
+  border: 1px solid var(--ink);
+}
+
+/* ---------- search ---------- */
+
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-field input {
+  width: 100%;
+  font-size: 1.0625rem;
+  padding: 0.75rem 2.25rem 0.75rem 0.875rem;
+  color: var(--ink);
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+}
+
+.search-field input::placeholder { color: var(--ink-faint); }
+
+.search-clear {
+  position: absolute;
+  right: 0.375rem;
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--ink-faint);
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0.375rem 0.5rem;
+  cursor: pointer;
+}
+
+.hero { padding: 2.5rem 0 1.5rem; }
+
+.hero h1 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+  font-weight: 600;
+  margin: 0 0 0.375rem;
+  letter-spacing: -0.01em;
+}
+
+.hero p {
+  margin: 0 0 1.5rem;
+  color: var(--ink-soft);
+  font-size: 0.9375rem;
+}
+
+/* ---------- the alphabet, weighted by what it holds ---------- */
+
+.alphabet {
+  margin: 2rem 0 0;
+}
+
+.alphabet h2 {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  margin: 0 0 0.75rem;
+}
+
+.letters {
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  gap: 2px;
+  align-items: end;
+}
+
+.letter {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: var(--ink-soft);
+}
+
+.letter i {
+  display: block;
+  width: 100%;
+  background: var(--rule-strong);
+  min-height: 2px;
+}
+
+.letter:hover i, .letter:focus-visible i { background: var(--craft); }
+.letter b { font-family: var(--sans); font-size: 0.6875rem; font-weight: 500; }
+
+/* ---------- results ---------- */
+
+.count {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  padding: 0.875rem 0 0.5rem;
+}
+
+.band-label {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  padding: 1.25rem 0 0.375rem;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 0.25rem;
+}
+
+.result {
+  display: block;
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 0.8125rem 0;
+  cursor: pointer;
+  color: inherit;
+  font-family: var(--serif);
+}
+
+.result:hover { background: var(--paper-sunk); }
+
+.result-head {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.result-body {
+  margin: 0.1875rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.result-page {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  margin-left: 0.5rem;
+  font-weight: 400;
+}
+
+/* ---------- entry ---------- */
+
+.entry { padding: 1.75rem 0 4rem; }
+
+.entry h1 {
+  font-size: 1.625rem;
+  line-height: 1.25;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.005em;
+}
+
+.entry-meta {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  color: var(--ink-faint);
+  margin: 0 0 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.entry-body {
+  font-size: 1.0625rem;
+  line-height: 1.68;
+}
+
+.entry-body p { margin: 0 0 1.1em; }
+
+mark {
+  background: var(--mark);
+  color: inherit;
+  padding: 0.05em 0.1em;
+  border-radius: 1px;
+}
+
+.refs { margin-top: 2rem; }
+
+.refs h2 {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  margin: 0 0 0.625rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+
+.ref {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0.25rem 0;
+  display: block;
+  color: var(--craft);
+  font-family: var(--serif);
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ref[disabled] { color: var(--ink-faint); cursor: default; }
+
+.review-note {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  background: var(--craft-soft);
+  border-left: 2px solid var(--craft);
+  padding: 0.625rem 0.75rem;
+  margin: 0 0 1.5rem;
+}
+
+/* ---------- states ---------- */
+
+.empty {
+  padding: 3rem 0;
+  color: var(--ink-soft);
+  font-size: 0.9375rem;
+}
+.empty strong { color: var(--ink); font-weight: 600; }
+
+.loading {
+  padding: 4rem 0;
+  text-align: center;
+  color: var(--ink-faint);
+  font-family: var(--sans);
+  font-size: 0.875rem;
+}
+
+.warming {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  padding: 0.5rem 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .result, .letter i { transition: background-color 120ms ease; }
+}
+
+@media (min-width: 40rem) {
+  :root { --measure: 38rem; }
+  .hero { padding: 3.5rem 0 2rem; }
+  .hero h1 { font-size: 2.125rem; }
+}
+
+/* ---------- persistent search bar ---------- */
+
+/*
+  The field lives outside the screens and is never re-rendered. Rebuilding it
+  on each keystroke destroyed the element being typed into, which dropped the
+  caret and, on a phone, dismissed the keyboard.
+*/
+.searchbar {
+  position: sticky;
+  top: 3.25rem;
+  z-index: 15;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  padding: 0.625rem 0 0.75rem;
+}
+
+.searchbar .wrap { position: relative; }
+
+.suggest {
+  position: absolute;
+  left: 1.25rem;
+  right: 1.25rem;
+  top: calc(100% + 2px);
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.10);
+  max-height: 60vh;
+  overflow-y: auto;
+  z-index: 30;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not(.theme-light) .suggest { box-shadow: 0 6px 18px rgb(0 0 0 / 0.45); }
+}
+body.theme-dark .suggest { box-shadow: 0 6px 18px rgb(0 0 0 / 0.45); }
+
+.suggest[hidden] { display: none; }
+
+.suggestion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 0.5625rem 0.8125rem;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.suggestion:last-child { border-bottom: 0; }
+.suggestion:hover,
+.suggestion[aria-selected="true"] { background: var(--craft-soft); }
+
+.suggestion mark { background: none; color: var(--craft); font-weight: 600; }
+
+.suggestion em {
+  display: block;
+  font-style: normal;
+  font-size: 0.8125rem;
+  color: var(--ink-faint);
+  font-family: var(--sans);
+  margin-top: 0.0625rem;
+}
+
+.suggest-all {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  color: var(--craft);
+  border-top: 1px solid var(--rule-strong);
+}
+
+/* ---------- reading options ---------- */
+
+.typeset {
+  margin-left: auto;
+  appearance: none;
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.typeset[aria-expanded="true"] { border-color: var(--craft); color: var(--craft); }
+
+.options {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-sunk);
+}
+.options[hidden] { display: none; }
+.options .wrap { padding-top: 0.875rem; padding-bottom: 0.875rem; }
+
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3125rem 0;
+}
+.option-row span {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.steps { display: flex; gap: 2px; }
+.steps button {
+  appearance: none;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-soft);
+  font-family: var(--serif);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.steps button + button { border-left: 0; }
+.steps button[aria-pressed="true"] {
+  background: var(--craft);
+  border-color: var(--craft);
+  color: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  body:not(.theme-light) .steps button[aria-pressed="true"] { color: #12131a; }
+}
+body.theme-dark .steps button[aria-pressed="true"] { color: #12131a; }
+
+/* Reading mode: the book, with the apparatus out of the way. */
+body.reading .searchbar { display: none; }
+body.reading .entry { padding-top: 2.5rem; }
+body.reading .entry-body { font-size: 1.1875rem; line-height: 1.8; }
+body.reading .entry h1 { font-size: 1.875rem; }
+body.reading .wrap { max-width: 32rem; }
+body.reading .result-body { -webkit-line-clamp: 3; }
+
+/* Three text sizes, applied to the entry text rather than the chrome. */
+body.size-s .entry-body { font-size: 1rem; }
+body.size-l .entry-body { font-size: 1.1875rem; line-height: 1.74; }
+body.size-xl .entry-body { font-size: 1.3125rem; line-height: 1.78; }
+body.reading.size-l .entry-body { font-size: 1.3125rem; }
+body.reading.size-xl .entry-body { font-size: 1.4375rem; line-height: 1.82; }
+
+
+/* ---------- the book's own front page ---------- */
+
+.cover { padding: 1.75rem 0 1.5rem; border-bottom: 1px solid var(--rule); }
+
+.cover figure {
+  margin: 0;
+  background: #fbfaf7;
+  border: 1px solid var(--rule-strong);
+  padding: 0.75rem;
+}
+
+.cover img { display: block; width: 100%; height: auto; }
+
+/* The scan is black on white; invert it at night rather than glare. */
+body.theme-dark .cover img { filter: invert(1) hue-rotate(180deg) brightness(0.92); }
+body.theme-dark .cover figure { background: #0f1014; }
+@media (prefers-color-scheme: dark) {
+  body:not(.theme-light) .cover img {
+    filter: invert(1) hue-rotate(180deg) brightness(0.92);
+  }
+  body:not(.theme-light) .cover figure { background: #0f1014; }
+}
+
+.cover figcaption {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  padding-top: 0.625rem;
+  text-align: center;
+}
+
+.browse {
+  display: block;
+  width: 100%;
+  margin-top: 1.125rem;
+  appearance: none;
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  color: var(--craft);
+  font-family: var(--sans);
+  font-size: 0.875rem;
+  padding: 0.625rem;
+  cursor: pointer;
+}
+.browse:hover { border-color: var(--craft); }
+
+body.reading .cover { display: none; }
+
+/* ---------- page by page ---------- */
+
+.pagebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid var(--rule);
+  position: sticky;
+  top: 3.25rem;
+  background: var(--paper);
+  z-index: 12;
+}
+
+.pagelabel {
+  font-family: var(--sans);
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.pagestep {
+  appearance: none;
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  color: var(--craft);
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  padding: 0.375rem 0.6875rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pagestep:hover:not([disabled]) { border-color: var(--craft); }
+.pagestep[disabled] { color: var(--ink-faint); cursor: default; opacity: 0.6; }
+
+.pagejump {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 0 3rem;
+}
+.pagejump span { font-size: 0.8125rem; color: var(--ink-soft); }
+.pagejump input {
+  width: 5.5rem;
+  font-size: 0.9375rem;
+  padding: 0.375rem 0.5rem;
+  color: var(--ink);
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+}
+
+body.reading .pagebar { top: 0; }
+
+/* ---------- recently viewed ---------- */
+
+.recent { margin: 2rem 0 0; }
+.recent h2 {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  margin: 0 0 0.5rem;
+}
+.recent-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 0.625rem 0;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1rem;
+}
+.recent-item:hover { background: var(--paper-sunk); }
+.recent-item em {
+  display: block;
+  font-style: normal;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  margin-top: 0.0625rem;
+}
+.recent-clear {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--craft);
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  padding: 0.625rem 0 0;
+  cursor: pointer;
+}
+
+/* ---------- about ---------- */
+
+/* A quiet link under the cover: present for anyone who looks for it, and
+   not competing with the one thing the home page asks you to do. */
+.about-link {
+  display: block;
+  margin: 1.25rem auto 0;
+  padding: 0.3rem 0.6rem;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.about-link:hover { color: var(--ink); border-bottom-color: var(--ink-soft); }
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgb(0 0 0 / 0.45);
+}
+
+.modal-card {
+  width: min(34rem, 100%);
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 1.5rem 1.5rem 1.25rem;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.3);
+}
+
+.modal-card h2 { margin: 0 0 0.75rem; font-size: 1rem; letter-spacing: 0.08em; }
+.modal-card h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.modal-card p { margin: 0 0 0.75rem; font-size: 0.95rem; line-height: 1.55; }
+.modal-card p.fine { font-size: 0.85rem; color: var(--ink-soft); }
+
+.modal-card .close {
+  margin-top: 0.75rem;
+  padding: 0.45rem 1.1rem;
+  background: none;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.modal-card .close:hover { background: var(--paper-sunk); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .modal-card { animation: rise 160ms ease-out; }
+}
+@keyframes rise {
+  from { transform: translateY(6px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
