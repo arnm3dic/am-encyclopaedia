@@ -125,6 +125,11 @@ class StubNode {
       (fn as (e: unknown) => void)(payload);
     }
   }
+  remove(): void {
+    const siblings = this.parentElement?.children;
+    if (siblings) siblings.splice(siblings.indexOf(this), 1);
+    this.parentElement = null;
+  }
   click(): void {
     this.dispatch("click");
   }
@@ -188,8 +193,23 @@ Object.defineProperty(globalThis, "localStorage", {
   },
 });
 
+const docListeners = new Map<string, Array<() => void>>();
+function documentListeners(type: string): number {
+  return docListeners.get(type)?.length ?? 0;
+}
+
 const documentStub = {
   body: bodyNode,
+  addEventListener(type: string, fn: () => void) {
+    const list = docListeners.get(type) ?? [];
+    list.push(fn);
+    docListeners.set(type, list);
+  },
+  removeEventListener(type: string, fn: () => void) {
+    const list = docListeners.get(type) ?? [];
+    const at = list.indexOf(fn);
+    if (at !== -1) list.splice(at, 1);
+  },
   createElement: (tag: string) => new StubNode(tag),
   createTextNode: (text: string) => {
     const node = new StubNode("#text");
@@ -679,4 +699,38 @@ test("opening an article from a page view works", () => {
   assert.ok(row, "nothing to open");
   row.click();
   assert.equal(app.find("entry").length, 1, "the article did not open");
+});
+
+test("the home page offers an about panel", () => {
+  while (!backButton.hidden) backButton.click();
+  const about = app.find("about-link")[0];
+  assert.ok(about, "no About control on the home page");
+  assert.equal(about.textContent, "About");
+});
+
+test("about names the compiler and states the disclaimer", () => {
+  while (!backButton.hidden) backButton.click();
+  bodyNode.find("modal").forEach((node) => node.remove());
+  app.find("about-link")[0].click();
+
+  const card = bodyNode.find("modal-card")[0];
+  assert.ok(card, "clicking About opened nothing");
+  const text = card.textContent;
+  assert.match(text, /Arnie T\./, "the compiler is not credited");
+  assert.match(text, /Brethren's reference/, "who it was compiled for is missing");
+  assert.match(text, /Hughan/, "the edition is not named");
+  assert.match(text, /free of charge for education and private study/);
+  assert.match(text, /may not be sold/);
+  assert.match(text, /neither published nor endorsed by any Grand Lodge/);
+});
+
+test("about closes again, and does not leave its key handler behind", () => {
+  while (!backButton.hidden) backButton.click();
+  bodyNode.find("modal").forEach((node) => node.remove());
+  app.find("about-link")[0].click();
+  const before = documentListeners("keydown");
+  bodyNode.find("close")[0].click();
+  assert.equal(bodyNode.find("modal-card").length, 0, "the panel did not close");
+  assert.equal(documentListeners("keydown"), before - 1,
+    "the Escape handler outlived the panel it belonged to");
 });

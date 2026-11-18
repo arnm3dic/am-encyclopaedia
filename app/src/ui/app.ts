@@ -124,7 +124,75 @@ function renderFrontPage(): HTMLElement {
     "Read the book page by page");
   browse.addEventListener("click", () => go({ name: "pages", page: firstPage() }));
   cover.append(browse);
+
+  const about = element("button", { class: "about-link sans", type: "button" }, "About");
+  about.addEventListener("click", openAbout);
+  cover.append(about);
   return cover;
+}
+
+/* ---------- about ---------- */
+
+const ABOUT_TEXT = [
+  "Albert G. Mackey's An Encyclopaedia of Freemasonry and Its Kindred "
+  + "Sciences, in the New and Revised Edition prepared by William J. Hughan "
+  + "and Edward L. Hawkins and published by The Masonic History Company in "
+  + "1914.",
+  "The text was read from a scan of the printed book a page at a time, then "
+  + "checked word by word against a second printing of the same edition. "
+  + "Where the two disagreed, the page itself was read again and settled it.",
+  "Compiled into a mobile application for the Brethren's reference by Arnie T.",
+];
+
+const DISCLAIMER = [
+  "This application is provided free of charge for education and private "
+  + "study. It may not be sold, licensed, or put to any commercial use, and "
+  + "it may not be bundled with any product or service that is offered for "
+  + "sale. The encyclopaedia itself is in the public domain, and this "
+  + "compilation is shared in the same spirit: it must remain free to "
+  + "everyone who receives it.",
+  "The text is a transcription of a scanned book and may contain errors of "
+  + "recognition. It carries no official standing, and it is neither "
+  + "published nor endorsed by any Grand Lodge or other Masonic body. Where "
+  + "accuracy matters, consult the printed edition.",
+];
+
+/** The about panel, as a dialog over the page. */
+function openAbout(): void {
+  const overlay = element("div", { class: "modal" });
+  const card = element("div", {
+    class: "modal-card", role: "dialog", "aria-modal": "true",
+    "aria-labelledby": "about-title",
+  });
+
+  card.append(element("h2", { class: "sans", id: "about-title" }, "About"));
+  for (const paragraph of ABOUT_TEXT) card.append(element("p", {}, paragraph));
+
+  card.append(element("h3", { class: "sans" }, "Disclaimer"));
+  for (const paragraph of DISCLAIMER) {
+    card.append(element("p", { class: "fine" }, paragraph));
+  }
+
+  const close = element("button", { class: "close sans", type: "button" }, "Close");
+  const dismiss = (): void => {
+    overlay.remove();
+    document.removeEventListener("keydown", onKey);
+  };
+  // Named rather than inline so the same reference can be removed again:
+  // an anonymous listener here would outlive every panel ever opened.
+  function onKey(event: KeyboardEvent): void {
+    if (event.key === "Escape") dismiss();
+  }
+  close.addEventListener("click", dismiss);
+  overlay.addEventListener("click", (event: Event) => {
+    if (event.target === overlay) dismiss();
+  });
+  document.addEventListener("keydown", onKey);
+
+  card.append(close);
+  overlay.append(card);
+  document.body.append(overlay);
+  close.focus();
 }
 
 /* ---------- page by page ---------- */
