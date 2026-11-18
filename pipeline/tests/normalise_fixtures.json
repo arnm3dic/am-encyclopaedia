@@ -1290,21 +1290,21 @@
     "first_letter": "S"
   },
   {
-    "input": "Scottish Templars.",
-    "normalise": "scottish templars",
-    "sort_key": "scottish templars",
+    "input": "Scottish Rite.",
+    "normalise": "scottish rite",
+    "sort_key": "scottish rite",
     "first_letter": "S"
   },
   {
-    "input": "Secret Vault.",
-    "normalise": "secret vault",
-    "sort_key": "secret vault",
+    "input": "Secret Soctetfes.",
+    "normalise": "secret soctetfes",
+    "sort_key": "secret soctetfes",
     "first_letter": "S"
   },
   {
-    "input": "Senior Warden.",
-    "normalise": "senior warden",
-    "sort_key": "senior warden",
+    "input": "Senior Deacon.",
+    "normalise": "senior deacon",
+    "sort_key": "senior deacon",
     "first_letter": "S"
   },
   {

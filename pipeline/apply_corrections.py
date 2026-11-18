@@ -43,7 +43,7 @@ from pipeline.reread_body import core_of, decide, vocabulary
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="build/full2")
-    parser.add_argument("--reference", default="build/reference/mackey1874.txt")
+    parser.add_argument("--reference", default="build/reference/mackey1914.txt")
     options = parser.parse_args()
 
     out_dir = Path(options.out)

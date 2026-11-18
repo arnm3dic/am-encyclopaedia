@@ -168,7 +168,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("pdf")
     parser.add_argument("--out", default="build/full2")
-    parser.add_argument("--reference", default="build/reference/mackey1874.txt")
+    parser.add_argument("--reference", default="build/reference/mackey1914.txt")
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--pages", default="", help="e.g. 1-400, to run in parts")
     options = parser.parse_args()
@@ -272,6 +272,21 @@ def main() -> int:
                           "top": record["top"], "was": record["was"],
                           "now": _respell(record["was"], record["other"])})
         else:
+            # The crop can come back with a neighbour's comma attached, a
+            # capital where the line had small capitals, or one letter still
+            # fused. When what it read is within one edit of the other copy
+            # and two or more from the scan, it is agreeing with the other
+            # copy through its own noise: ALLAB for allah, vancient for
+            # ancient, lasonic for masonic, tts for its.
+            near_other = ref.edits(ink, record["other"], 4)
+            near_scan = ref.edits(ink, record["scan"], 4)
+            if (near_other <= 1 and near_scan >= 2
+                    and (record["scan"], record["other"]) not in NEVER):
+                verdicts["ink leans to the other copy"] += 1
+                fixes.append({"pdf_page": record["pdf_page"], "left": record["left"],
+                              "top": record["top"], "was": record["was"],
+                              "now": _respell(record["was"], record["other"])})
+                continue
             verdicts["ink says neither"] += 1
             unresolved.append(record)
 

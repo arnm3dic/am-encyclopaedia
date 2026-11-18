@@ -362,12 +362,15 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
                 [e.__dict__ for e in entries],
                 json.loads(entry_overrides_path.read_text(encoding="utf-8")))
 
-        # The 1874 printing's vocabulary, used across the whole book: a word
-        # neither printing uses, whose confusable neighbour both do, is a
-        # misread. This catches what the article-by-article comparison cannot
-        # -- articles the 1914 revision added, and words the scan broke across
-        # a line and rejoined wrongly.
-        lexicon_path = Path("build/reference/lexicon1874.json")
+        # The other copy's vocabulary, used across the whole book: a word
+        # neither copy uses, whose confusable neighbour both do, is a misread.
+        # This catches what the article-by-article comparison cannot -- the
+        # few articles it fails to locate, and words the scan broke across a
+        # line and rejoined wrongly. Since November this is the 1924 reprint
+        # of the same 1914 revision rather than the 1874 first edition, so a
+        # word missing from it is missing from this very book, not merely from
+        # an earlier edition of it.
+        lexicon_path = Path("build/reference/lexicon1914.json")
         if lexicon_path.exists():
             lexicon = Counter(json.loads(lexicon_path.read_text(encoding="utf-8")))
             trusted = set()
