@@ -1,0 +1,46 @@
+# Publish the built site to GitHub Pages.
+#
+# Pages can be turned on from Settings -> Pages, but it can also be turned on
+# from here: configure-pages with enablement: true switches it on through the
+# API using the token this workflow already has. That matters because the
+# setting is easy to miss in the interface, and because this way the site
+# redeploys on every push to main without anyone having to remember a step.
+#
+# docs/ is uploaded as it stands. Nothing is built here: the data comes out of
+# the Python pipeline, which needs a 58 MB scan that is not in this
+# repository, so there is nothing a runner could rebuild it from.
+
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; let a run in progress finish rather than cancelling
+# it, so a half-uploaded site is never what is live.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4
