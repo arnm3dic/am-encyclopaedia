@@ -21,9 +21,9 @@ Object.defineProperty(globalThis, "localStorage", {
 const gate = await import("../src/ui/gate.ts");
 
 test("the word is admitted, and nothing else is", () => {
-  assert.ok(gate.admits("LOTG#102"));
-  assert.ok(gate.admits("  LOTG#102  "), "surrounding spaces should not matter");
-  for (const wrong of ["lotg#102", "LOTG#103", "LOTG102", "", "LOTG#1021", "LOTG #102"]) {
+  assert.ok(gate.admits("LOTG#107"));
+  assert.ok(gate.admits("  LOTG#107  "), "surrounding spaces should not matter");
+  for (const wrong of ["lotg#107", "LOTG#102", "LOTG#108", "LOTG107", "", "LOTG#1071", "LOTG #107"]) {
     assert.ok(!gate.admits(wrong), `${JSON.stringify(wrong)} was admitted`);
   }
 });
@@ -32,7 +32,7 @@ test("the word is not in the source in plain sight", () => {
   // Obscurity, not security -- but the answer should not be readable at a
   // glance in a public repository.
   const source = readFileSync(new URL("../src/ui/gate.ts", import.meta.url), "utf8");
-  assert.ok(!source.includes("LOTG#102"), "the word is written out in gate.ts");
+  assert.ok(!source.includes("LOTG#10"), "the word is written out in gate.ts");
 });
 
 test("four wrong answers close the door for twenty seconds", () => {
@@ -67,6 +67,17 @@ test("the question is asked once per installation", () => {
   assert.ok(!gate.admittedBefore(), "clearing storage should ask again");
 });
 
+test("changing the word asks every installation again", () => {
+  store.clear();
+  gate.admitted();
+  assert.ok(gate.admittedBefore());
+  // What an admission records is the word that earned it. An admission under
+  // some other word is no admission under this one.
+  store.set("am-door-passed", "an-older-word");
+  assert.ok(!gate.admittedBefore(),
+    "a copy admitted under the previous word was not asked again");
+});
+
 test("being admitted clears the count and the wait", () => {
   store.clear();
   const now = 3_000_000;
@@ -77,9 +88,9 @@ test("being admitted clears the count and the wait", () => {
 });
 
 test("a digest is stable and does not collide on near misses", () => {
-  assert.equal(gate.digest("LOTG#102"), gate.digest("LOTG#102"));
+  assert.equal(gate.digest("LOTG#107"), gate.digest("LOTG#107"));
   const seen = new Set<string>();
-  for (const word of ["LOTG#102", "LOTG#103", "lotg#102", "LOTG#101", "LOTG#112"]) {
+  for (const word of ["LOTG#107", "LOTG#103", "lotg#107", "LOTG#101", "LOTG#117"]) {
     seen.add(gate.digest(word));
   }
   assert.equal(seen.size, 5, "two different words produced the same digest");

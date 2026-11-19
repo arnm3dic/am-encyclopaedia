@@ -34,7 +34,7 @@ const LIMIT = 4;
 const WAIT_MS = 20_000;
 
 /** The expected answer, as a digest. See the note above on what that is for. */
-const EXPECTED = "664aac84-3b1ee9e4";
+const EXPECTED = "39f791e9-7b4c07ed";
 
 /**
  * A small, stable digest. Deliberately not Web Crypto: subtle.crypto needs a
@@ -69,6 +69,22 @@ function read(key        )         {
   }
 }
 
+function readText(key        )         {
+  try {
+    return localStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeText(key        , value        )       {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* A door that cannot remember is still a door. */
+  }
+}
+
 function write(key        , value        )       {
   try {
     localStorage.setItem(key, String(value));
@@ -97,17 +113,21 @@ export function refuse(now = Date.now())         {
 export function admitted()       {
   write(ATTEMPTS_KEY, 0);
   write(UNTIL_KEY, 0);
-  write(PASSED_KEY, 1);
+  // What is remembered is which word was given, not merely that one was. So
+  // changing the word asks every installation again, which is the whole point
+  // of changing it -- otherwise a copy admitted under the old word would go
+  // on opening for ever.
+  writeText(PASSED_KEY, EXPECTED);
 }
 
-/** Whether this installation has already been admitted. */
+/** Whether this installation has been admitted under the word now in force. */
 export function admittedBefore()          {
-  return read(PASSED_KEY) === 1;
+  return readText(PASSED_KEY) === EXPECTED;
 }
 
 /** Ask again on this installation. Nothing calls this yet; it is the way back. */
 export function forget()       {
-  write(PASSED_KEY, 0);
+  writeText(PASSED_KEY, "");
 }
 
 export function triesLeft()         {

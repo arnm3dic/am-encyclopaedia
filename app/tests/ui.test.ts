@@ -292,7 +292,7 @@ test("the word opens it", async () => {
   // The wait is real, so it is cleared here rather than waited out.
   localStorage.removeItem("am-door-until");
   doorWord.disabled = false;
-  doorWord.value = "LOTG#102";
+  doorWord.value = "LOTG#107";
   doorForm.dispatch("submit", { preventDefault() {} });
   await new Promise((resolve) => setTimeout(resolve, 2500));
   assert.ok(!bodyNode.classList.contains("shut"), "the masthead stayed hidden");
