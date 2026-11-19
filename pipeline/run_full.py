@@ -529,23 +529,33 @@ def aggregate(out_dir: Path, correct: bool = True) -> dict:
             body_count += body_text.apply_joins([e.__dict__ for e in entries], joins)
             body_plan = body_plan + joins
 
-            ref_path = Path("build/reference/mackey1914.txt")
-            ref_text = reference.load(ref_path) if ref_path.exists() else None
+            # Every copy of THIS edition we have: different printings of the
+            # same plates, scanned and read by different engines, so a passage
+            # one of them mangles another usually has clean. The 1874 first
+            # edition is deliberately not among them -- it is a different book
+            # in places, and taking a passage from it would put an editor's
+            # earlier wording into a 1914 article. It is still used for its
+            # vocabulary, where a word it knows only makes this pass more
+            # cautious.
+            ref_paths = sorted(Path("build/reference").glob("mackey*.txt"))
             trusted_all = reference.trusted_vocabulary([e.__dict__ for e in entries])
 
             # Passages the scan mangled past repairing a word at a time --
             # lines run together, words merged and lost -- taken from the
             # same edition's text, after every word-level repair has had its
             # chance at them.
-            if ref_text is not None:
+            all_repairs = []
+            for ref_path in ref_paths:
+                ref_text = reference.load(ref_path)
                 repairs = passages.plan(
                     [e.__dict__ for e in entries], ref_text, trusted_all,
                     passages.build_model([e.__dict__ for e in entries]))
-                body_count += passages.apply([e.__dict__ for e in entries], repairs)
-                (out_dir / "passage_repairs.json").write_text(
-                    json.dumps([r.as_dict() for r in repairs],
-                               ensure_ascii=False, indent=1), encoding="utf-8")
-                print(f"  passages repaired from the other copy: {len(repairs)}")
+                done = passages.apply([e.__dict__ for e in entries], repairs)
+                body_count += done
+                all_repairs.extend(r.as_dict() for r in repairs)
+                print(f"  passages repaired from {ref_path.name}: {done}")
+            (out_dir / "passage_repairs.json").write_text(
+                json.dumps(all_repairs, ensure_ascii=False, indent=1), encoding="utf-8")
 
         # Corrections the 1874 printing attests to, scoped to the article they
         # were found in. These come last among the word-level repairs so that

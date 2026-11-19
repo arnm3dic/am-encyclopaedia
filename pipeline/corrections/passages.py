@@ -145,13 +145,25 @@ def plan(entries: list[dict], reference: ref.Reference, trusted: set[str],
                 continue                                   # their side suspect
             if any(a == b for a, b in zip(replacement, replacement[1:])):
                 continue                                   # a running head slipped in
+            # The replacement has to carry a comparable amount of text. In
+            # the Andrea article a damaged two-word phrase was about to be
+            # replaced by "l I s" -- three stray letters for eighteen -- which
+            # passed every other test because single letters are attested
+            # words and the count had gone up rather than down.
+            letters_ours = "".join(ours)
+            letters_theirs = "".join(replacement)
+            if len(letters_theirs) < 0.7 * len(letters_ours):
+                continue
+            singles = sum(1 for w in replacement if len(w) == 1 and w not in "ai")
+            if singles * 2 > len(replacement):
+                continue
             if len(replacement) < len(ours):
                 # A repair that uses fewer words has to be made of roughly
                 # the same letters, or it is dropping something the page
                 # prints: "um brage" into "umbrage" keeps every letter, while
                 # "bodfrey roclaimed" into "proclaimed" quietly loses
                 # Godfrey.
-                a, b = "".join(ours), "".join(replacement)
+                a, b = letters_ours, letters_theirs
                 if ref.edits(a, b, max(2, len(a) // 4)) > max(2, len(a) // 4):
                     continue
             ours_reads = _reads_like_english(ours, model)
