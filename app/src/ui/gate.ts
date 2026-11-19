@@ -18,10 +18,17 @@
  *
  * Four wrong answers close the door for twenty seconds. The count and the
  * closing time are kept in storage, so reloading the page does not reopen it.
+ *
+ * The question is asked once per installation, not once per opening. A copy
+ * installed on a phone asks on its first run and then opens straight into the
+ * book, which is what being admitted means: the Brother is known to this
+ * copy from then on. Another device, another browser, or site data cleared,
+ * and it asks again, because that is a different copy.
  */
 
 const ATTEMPTS_KEY = "am-door-tries";
 const UNTIL_KEY = "am-door-until";
+const PASSED_KEY = "am-door-passed";
 
 const LIMIT = 4;
 const WAIT_MS = 20_000;
@@ -90,6 +97,17 @@ export function refuse(now = Date.now()): number {
 export function admitted(): void {
   write(ATTEMPTS_KEY, 0);
   write(UNTIL_KEY, 0);
+  write(PASSED_KEY, 1);
+}
+
+/** Whether this installation has already been admitted. */
+export function admittedBefore(): boolean {
+  return read(PASSED_KEY) === 1;
+}
+
+/** Ask again on this installation. Nothing calls this yet; it is the way back. */
+export function forget(): void {
+  write(PASSED_KEY, 0);
 }
 
 export function triesLeft(): number {

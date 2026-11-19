@@ -795,7 +795,11 @@ async function start()                {
     // The book loads while the door is shut, so answering opens it at once
     // instead of starting a five-megabyte wait at that moment.
     const loading = loadDictionary();
-    await new Promise      ((open) => gate.guard(root, open));
+    // Once per installation, not once per opening: a copy that has been
+    // admitted opens into the book.
+    if (!gate.admittedBefore()) {
+      await new Promise      ((open) => gate.guard(root, open));
+    }
 
     const loaded = await loading;
     dictionary = loaded.dictionary;

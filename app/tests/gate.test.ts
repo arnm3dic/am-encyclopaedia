@@ -57,6 +57,16 @@ test("the wait survives a reload, and the count resets with it", () => {
   assert.equal(gate.triesLeft(), 4, "the count should start again after a wait");
 });
 
+test("the question is asked once per installation", () => {
+  store.clear();
+  assert.ok(!gate.admittedBefore(), "a fresh installation should be asked");
+  gate.admitted();
+  assert.ok(gate.admittedBefore(), "an admitted installation should not be asked again");
+  // Clearing site data is a new installation as far as this is concerned.
+  store.clear();
+  assert.ok(!gate.admittedBefore(), "clearing storage should ask again");
+});
+
 test("being admitted clears the count and the wait", () => {
   store.clear();
   const now = 3_000_000;

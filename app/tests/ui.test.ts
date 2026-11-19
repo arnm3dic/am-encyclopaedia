@@ -197,6 +197,10 @@ Object.defineProperty(globalThis, "localStorage", {
   },
 });
 
+// A fresh installation, so the challenge is shown: the app only asks once
+// per install, and a stored admission would skip straight past it.
+try { localStorage.removeItem("am-door-passed"); } catch { /* no storage */ }
+
 const docListeners = new Map<string, Array<() => void>>();
 function documentListeners(type: string): number {
   return docListeners.get(type)?.length ?? 0;
